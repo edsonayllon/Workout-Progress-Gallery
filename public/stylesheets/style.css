@@ -1,0 +1,55 @@
+
+a {
+  color: #00b7ff;
+}
+
+body {
+    background-color: #111;
+    font-family: 'Work Sans', Helvetica, Arial, sans-serif;
+    color: #FFF;
+}
+
+h1 {
+    color: #999;
+    font-weight: 100;
+    text-align: center;
+    font-size: 48px;
+}
+
+#container {
+  margin: auto;
+  width: 900px;
+}
+
+#leftArrow, #rightArrow{
+  font-size: 60px;
+  position: absolute;
+  text-decoration: none;
+  top: 150px;
+  font-weight: 100;
+}
+
+#rightArrow{
+  right: 0;
+}
+
+#leftArrow {
+  left: 0;
+}
+
+a#rightArrow:visited, a#leftArrow:visited,
+a#rightArrow, a#leftArrow {
+  color: rgba(255, 99, 71, 0.72);
+}
+
+a#rightArrow:hover, a#leftArrow:hover  {
+  color: rgba(255, 99, 71, 0.50);
+}
+
+a#rightArrow:active, a#leftArrow:active {
+  color: rgba(255, 99, 71, 1);
+}
+
+#content{
+  position: relative;
+}
