@@ -1,4 +1,7 @@
-# Workout-Progress-Gallery
-A simple gallery to track my workout progress
+## Project 1-2018
 
-The project is currently unfinished
+# Workout-Progress-Gallery
+
+A simple gallery to track my workout.
+
+The project is currently unfinished, probably won't ever be finished.
