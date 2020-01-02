@@ -1,6 +1,6 @@
 ## Project 1-2018
 
-# Workout-Progress-Gallery
+# Workout Progress Gallery
 
 A simple gallery to track my workout.
 
