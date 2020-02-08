@@ -1,10 +1,14 @@
 ---
 author: Edson Ayllon
 category: app
+tags: 
+- personal project
+- node
+- html/css
 status: discontinued
 ---
 
-## Project 1-2018
+### Project 1-2018 
 
 # Workout Progress Gallery
 
