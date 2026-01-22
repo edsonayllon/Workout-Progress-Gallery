@@ -8,11 +8,8 @@ import { Navigation } from './components/Navigation'
 import { AuthScreen } from './components/AuthScreen'
 
 function UserMenu() {
-  const { user, logout, updateUsername } = useAuthContext()
+  const { user, logout } = useAuthContext()
   const [isOpen, setIsOpen] = useState(false)
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [nameValue, setNameValue] = useState(user?.username || '')
-  const [isSaving, setIsSaving] = useState(false)
   const menuRef = useRef(null)
 
   // Close menu when clicking outside
@@ -20,93 +17,38 @@ function UserMenu() {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setIsOpen(false)
-        setIsEditingName(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Update nameValue when user changes
-  useEffect(() => {
-    setNameValue(user?.username || '')
-  }, [user?.username])
-
-  const handleSaveName = async () => {
-    setIsSaving(true)
-    try {
-      await updateUsername(nameValue.trim() || null)
-      setIsEditingName(false)
-    } catch (err) {
-      alert(err.message)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSaveName()
-    } else if (e.key === 'Escape') {
-      setNameValue(user?.username || '')
-      setIsEditingName(false)
-    }
-  }
-
   return (
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors"
+        className="w-9 h-9 rounded-full overflow-hidden bg-blue-500 hover:ring-2 hover:ring-blue-300 transition-all"
         title="User settings"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
+        {user?.photoURL ? (
+          <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+        )}
       </button>
 
       {isOpen && (
         <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs text-gray-400 uppercase tracking-wide">Account</p>
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="text-sm font-medium text-gray-800">{user?.displayName || 'User'}</p>
+            <p className="text-xs text-gray-500">{user?.email}</p>
           </div>
 
-          <div className="px-4 py-3">
-            <label className="text-sm text-gray-600 block mb-1">Display Name</label>
-            {isEditingName ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={nameValue}
-                  onChange={(e) => setNameValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter name"
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-                  autoFocus
-                  disabled={isSaving}
-                />
-                <button
-                  onClick={handleSaveName}
-                  disabled={isSaving}
-                  className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                >
-                  {isSaving ? '...' : 'Save'}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsEditingName(true)}
-                className="text-sm text-gray-800 hover:text-blue-500 flex items-center gap-1"
-              >
-                {user?.username || <span className="text-gray-400 italic">Not set</span>}
-                <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          <div className="border-t border-gray-100 mt-1 pt-1">
+          <div className="pt-1">
             <button
               onClick={logout}
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

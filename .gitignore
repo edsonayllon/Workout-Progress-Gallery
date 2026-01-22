@@ -44,6 +44,8 @@ Thumbs.db
 # Testing
 coverage
 
-# Database and uploads
-data/
-server/uploads/
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

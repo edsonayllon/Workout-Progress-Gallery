@@ -1,45 +1,107 @@
 import { useState, useEffect, useCallback } from 'react'
-import { photosApi } from '../api/client'
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+} from 'firebase/firestore'
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage'
+import { onAuthStateChanged } from 'firebase/auth'
+import { v4 as uuidv4 } from 'uuid'
+import { db, storage, auth } from '../firebase'
 
 export function usePhotoStorage() {
   const [photos, setPhotos] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [userId, setUserId] = useState(null)
 
-  // Load photos from API on mount
+  // Listen to auth state changes
   useEffect(() => {
-    loadPhotos()
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUserId(user?.uid || null)
+    })
+    return () => unsubscribe()
   }, [])
 
-  const loadPhotos = async () => {
-    try {
-      const data = await photosApi.list()
-      // Sort by date chronologically (oldest first)
-      const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date))
-      setPhotos(sorted)
-    } catch (error) {
-      console.error('Failed to load photos:', error)
+  // Subscribe to photos collection for the current user
+  useEffect(() => {
+    if (!userId) {
+      setPhotos([])
+      setIsLoaded(true)
+      return
     }
-    setIsLoaded(true)
-  }
+
+    const photosQuery = query(
+      collection(db, 'photos'),
+      where('userId', '==', userId),
+      orderBy('date', 'asc')
+    )
+
+    const unsubscribe = onSnapshot(
+      photosQuery,
+      (snapshot) => {
+        const photosData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setPhotos(photosData)
+        setIsLoaded(true)
+      },
+      (error) => {
+        console.error('Error fetching photos:', error)
+        setIsLoaded(true)
+      }
+    )
+
+    return () => unsubscribe()
+  }, [userId])
 
   const addPhoto = useCallback(async (file, date) => {
-    try {
-      const newPhoto = await photosApi.upload(file, date)
+    const user = auth.currentUser
+    if (!user) {
+      throw new Error('Must be logged in to upload photos')
+    }
 
-      // Add default measurements if not present
-      if (!newPhoto.measurements) {
-        newPhoto.measurements = [
+    try {
+      // Generate unique filename
+      const ext = file.name.split('.').pop()
+      const filename = `${uuidv4()}.${ext}`
+      const storagePath = `photos/${user.uid}/${filename}`
+
+      // Upload file to Firebase Storage
+      const storageRef = ref(storage, storagePath)
+      await uploadBytes(storageRef, file)
+
+      // Get download URL
+      const imageUrl = await getDownloadURL(storageRef)
+
+      // Create Firestore document
+      const photoData = {
+        userId: user.uid,
+        storagePath,
+        imageUrl,
+        date: date || new Date().toISOString().split('T')[0],
+        weight: null,
+        measurements: [
           { label: 'Waist', value: null },
           { label: 'Shoulders', value: null },
-        ]
+        ],
+        createdAt: serverTimestamp(),
       }
 
-      setPhotos(prev => {
-        const updated = [...prev, newPhoto]
-        return updated.sort((a, b) => new Date(a.date) - new Date(b.date))
-      })
-
-      return newPhoto.id
+      const docRef = await addDoc(collection(db, 'photos'), photoData)
+      return docRef.id
     } catch (error) {
       console.error('Failed to upload photo:', error)
       throw error
@@ -48,14 +110,8 @@ export function usePhotoStorage() {
 
   const updatePhoto = useCallback(async (id, updates) => {
     try {
-      const updated = await photosApi.update(id, updates)
-
-      setPhotos(prev => {
-        const newPhotos = prev.map(photo =>
-          photo.id === id ? { ...photo, ...updated } : photo
-        )
-        return newPhotos.sort((a, b) => new Date(a.date) - new Date(b.date))
-      })
+      const photoRef = doc(db, 'photos', id)
+      await updateDoc(photoRef, updates)
     } catch (error) {
       console.error('Failed to update photo:', error)
       throw error
@@ -64,17 +120,30 @@ export function usePhotoStorage() {
 
   const deletePhoto = useCallback(async (id) => {
     try {
-      await photosApi.delete(id)
-      setPhotos(prev => prev.filter(photo => photo.id !== id))
+      // Find the photo to get the storage path
+      const photo = photos.find((p) => p.id === id)
+      if (photo?.storagePath) {
+        // Delete from Firebase Storage
+        const storageRef = ref(storage, photo.storagePath)
+        await deleteObject(storageRef).catch((error) => {
+          // Ignore error if file doesn't exist
+          if (error.code !== 'storage/object-not-found') {
+            console.error('Error deleting file from storage:', error)
+          }
+        })
+      }
+
+      // Delete Firestore document
+      await deleteDoc(doc(db, 'photos', id))
     } catch (error) {
       console.error('Failed to delete photo:', error)
       throw error
     }
-  }, [])
+  }, [photos])
 
   const refreshPhotos = useCallback(() => {
     setIsLoaded(false)
-    loadPhotos()
+    setTimeout(() => setIsLoaded(true), 100)
   }, [])
 
   return {

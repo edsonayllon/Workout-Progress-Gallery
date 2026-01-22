@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /photos/{photoId} {
+      // Allow read/write if user is authenticated and owns the photo
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      // Allow create if user is authenticated and sets correct userId
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}

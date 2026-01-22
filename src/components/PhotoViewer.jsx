@@ -34,7 +34,7 @@ export function PhotoViewer({ photo, previousPhoto }) {
     <div className="bg-white rounded-t-xl overflow-hidden border border-b-0 border-gray-200">
       <div className="relative flex justify-center items-center bg-gray-100">
         <img
-          src={photo.src}
+          src={photo.imageUrl}
           alt="Progress photo"
           className="max-w-full max-h-[70vh] object-contain"
         />
