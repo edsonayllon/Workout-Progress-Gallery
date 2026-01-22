@@ -1,4 +1,0 @@
-# exclude everything in files
-*
-*/
-!.gitignore

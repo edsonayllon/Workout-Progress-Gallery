@@ -1,99 +1,13 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Workout Progress</title>
-
-<link rel="stylesheet"
-  href="https://fonts.googleapis.com/css?family=Work+Sans">
-
-<style>
-body {
-    background-color: #111;
-    font-family: 'Font Name', sans-serif;
-}
-
-h1 {
-    color: #999;
-    font-weight: 100;
-    text-align: center;
-    font-size: 48px;
-}
-
-#container {
-  margin: auto;
-  width: 900px;
-}
-
-#leftArrow, #rightArrow{
-  font-size: 60px;
-  position: absolute;
-  text-decoration: none;
-  top: 150px;
-  font-weight: 100;
-}
-
-#rightArrow{
-  right: 0;
-}
-
-#leftArrow {
-  left: 0;
-}
-
-a#rightArrow:visited, a#leftArrow:visited,
-a#rightArrow, a#leftArrow {
-  color: rgba(255, 99, 71, 0.72);
-}
-
-a#rightArrow:hover, a#leftArrow:hover  {
-  color: rgba(255, 99, 71, 0.50);
-}
-
-a#rightArrow:active, a#leftArrow:active {
-  color: rgba(255, 99, 71, 1);
-}
-
-#content{
-  position: relative;
-}
-
-</style>
-
-
-<script>
-
-var fs = require('fs');
-var imgList = fs.readdirSync('/assets/');
-var imgListLen = imageList.length;
-print(imgList);
-print(imgListLen);
-
-</script>
-
-</head>
-<body>
-
-<div id="container">
-  <div id="header">
-    <h1>Workout Progress</h1>
-  </div>
-
-  <div id="content">
-
-    <a id="leftArrow" href="#">
-      &#8678;
-    </a>
-
-    <a id="rightArrow" href="#">
-      &#8680;
-    </a>
-
-    <img src="" alt="" id="images">
-
-  </div>
-</div>
-
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workout Progress Gallery</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
