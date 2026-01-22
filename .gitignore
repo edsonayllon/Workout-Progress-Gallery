@@ -43,3 +43,7 @@ Thumbs.db
 
 # Testing
 coverage
+
+# Database and uploads
+data/
+server/uploads/

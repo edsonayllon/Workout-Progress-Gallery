@@ -1,76 +1,88 @@
-import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'workout-progress-photos'
+import { useState, useEffect, useCallback } from 'react'
+import { photosApi } from '../api/client'
 
 export function usePhotoStorage() {
   const [photos, setPhotos] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
 
-  // Load photos from localStorage on mount
+  // Load photos from API on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        // Sort by date chronologically (oldest first)
-        const sorted = parsed.sort((a, b) => new Date(a.date) - new Date(b.date))
-        setPhotos(sorted)
-      }
-    } catch (error) {
-      console.error('Failed to load photos from localStorage:', error)
-    }
-    setIsLoaded(true)
+    loadPhotos()
   }, [])
 
-  // Save photos to localStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(photos))
-      } catch (error) {
-        console.error('Failed to save photos to localStorage:', error)
+  const loadPhotos = async () => {
+    try {
+      const data = await photosApi.list()
+      // Sort by date chronologically (oldest first)
+      const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date))
+      setPhotos(sorted)
+    } catch (error) {
+      console.error('Failed to load photos:', error)
+    }
+    setIsLoaded(true)
+  }
+
+  const addPhoto = useCallback(async (file, date) => {
+    try {
+      const newPhoto = await photosApi.upload(file, date)
+
+      // Add default measurements if not present
+      if (!newPhoto.measurements) {
+        newPhoto.measurements = [
+          { label: 'Waist', value: null },
+          { label: 'Shoulders', value: null },
+        ]
       }
+
+      setPhotos(prev => {
+        const updated = [...prev, newPhoto]
+        return updated.sort((a, b) => new Date(a.date) - new Date(b.date))
+      })
+
+      return newPhoto.id
+    } catch (error) {
+      console.error('Failed to upload photo:', error)
+      throw error
     }
-  }, [photos, isLoaded])
+  }, [])
 
-  const addPhoto = (photoData) => {
-    const newPhoto = {
-      id: Date.now().toString(),
-      src: photoData.src,
-      date: photoData.date || new Date().toISOString().split('T')[0],
-      weight: null,
-      measurements: [
-        { label: 'Waist', value: null },
-        { label: 'Shoulders', value: null }
-      ]
+  const updatePhoto = useCallback(async (id, updates) => {
+    try {
+      const updated = await photosApi.update(id, updates)
+
+      setPhotos(prev => {
+        const newPhotos = prev.map(photo =>
+          photo.id === id ? { ...photo, ...updated } : photo
+        )
+        return newPhotos.sort((a, b) => new Date(a.date) - new Date(b.date))
+      })
+    } catch (error) {
+      console.error('Failed to update photo:', error)
+      throw error
     }
-    setPhotos(prev => {
-      const updated = [...prev, newPhoto]
-      // Sort by date chronologically
-      return updated.sort((a, b) => new Date(a.date) - new Date(b.date))
-    })
-    return newPhoto.id
-  }
+  }, [])
 
-  const updatePhoto = (id, updates) => {
-    setPhotos(prev => {
-      const updated = prev.map(photo =>
-        photo.id === id ? { ...photo, ...updates } : photo
-      )
-      // Re-sort if date changed
-      return updated.sort((a, b) => new Date(a.date) - new Date(b.date))
-    })
-  }
+  const deletePhoto = useCallback(async (id) => {
+    try {
+      await photosApi.delete(id)
+      setPhotos(prev => prev.filter(photo => photo.id !== id))
+    } catch (error) {
+      console.error('Failed to delete photo:', error)
+      throw error
+    }
+  }, [])
 
-  const deletePhoto = (id) => {
-    setPhotos(prev => prev.filter(photo => photo.id !== id))
-  }
+  const refreshPhotos = useCallback(() => {
+    setIsLoaded(false)
+    loadPhotos()
+  }, [])
 
   return {
     photos,
     isLoaded,
     addPhoto,
     updatePhoto,
-    deletePhoto
+    deletePhoto,
+    refreshPhotos,
   }
 }

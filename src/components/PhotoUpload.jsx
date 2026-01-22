@@ -72,7 +72,7 @@ export function PhotoUpload({ onUpload }) {
       return
     }
 
-    let fileToRead = file
+    let fileToUpload = file
     setIsConverting(true)
 
     // Extract date from EXIF metadata (before any conversion)
@@ -81,25 +81,26 @@ export function PhotoUpload({ onUpload }) {
     // Convert HEIC/HEIF to JPEG
     if (isHeic) {
       try {
-        fileToRead = await convertHeicToJpeg(file)
+        const blob = await convertHeicToJpeg(file)
+        // Create a new File from the blob with .jpg extension
+        const baseName = file.name.replace(/\.(heic|heif)$/i, '')
+        fileToUpload = new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' })
       } catch (error) {
         console.error('HEIC conversion failed:', error)
         // Fallback to original file (works in Safari)
         console.log('Using original file as fallback')
-        fileToRead = file
+        fileToUpload = file
       }
     }
 
     setIsConverting(false)
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      onUpload({
-        src: e.target.result,
-        date: photoDate
-      })
+    // Upload file directly to the server
+    try {
+      await onUpload(fileToUpload, photoDate)
+    } catch (error) {
+      alert('Failed to upload photo: ' + error.message)
     }
-    reader.readAsDataURL(fileToRead)
 
     // Reset input so same file can be uploaded again
     event.target.value = ''
