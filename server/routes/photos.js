@@ -31,45 +31,54 @@ router.get('/', (req, res) => {
   }
 })
 
-// Upload a new photo
-router.post('/', async (req, res) => {
-  try {
-    // Handle file upload with multer v2 async API
-    await upload.single('photo')(req)
-
-    if (!req.file) {
-      return res.status(400).json({ error: 'No photo uploaded' })
-    }
-
-    const id = uuidv4()
-    const date = req.body.date || new Date().toISOString().split('T')[0]
-    const weight = req.body.weight ? parseFloat(req.body.weight) : null
-    const measurements = req.body.measurements || JSON.stringify([
-      { label: 'Waist', value: null },
-      { label: 'Shoulders', value: null },
-    ])
-
-    photoQueries.create.run(
-      id,
-      req.user.id,
-      req.file.filename,
-      date,
-      weight,
-      measurements
-    )
-
-    res.status(201).json({
-      id,
-      src: `/api/uploads/${req.file.filename}`,
-      date,
-      weight,
-      measurements: JSON.parse(measurements),
+// Upload a new photo - use middleware pattern for multer
+router.post(
+  '/',
+  (req, res, next) => {
+    upload.single('photo')(req, res, (err) => {
+      if (err) {
+        console.error('Multer error:', err)
+        return res.status(400).json({ error: err.message || 'Upload failed' })
+      }
+      next()
     })
-  } catch (error) {
-    console.error('Upload photo error:', error)
-    res.status(500).json({ error: error.message || 'Failed to upload photo' })
+  },
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No photo uploaded' })
+      }
+
+      const id = uuidv4()
+      const date = req.body.date || new Date().toISOString().split('T')[0]
+      const weight = req.body.weight ? parseFloat(req.body.weight) : null
+      const measurements = req.body.measurements || JSON.stringify([
+        { label: 'Waist', value: null },
+        { label: 'Shoulders', value: null },
+      ])
+
+      photoQueries.create.run(
+        id,
+        req.user.id,
+        req.file.filename,
+        date,
+        weight,
+        measurements
+      )
+
+      res.status(201).json({
+        id,
+        src: `/api/uploads/${req.file.filename}`,
+        date,
+        weight,
+        measurements: JSON.parse(measurements),
+      })
+    } catch (error) {
+      console.error('Upload photo error:', error)
+      res.status(500).json({ error: error.message || 'Failed to upload photo' })
+    }
   }
-})
+)
 
 // Update photo metadata
 router.patch('/:id', (req, res) => {

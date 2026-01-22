@@ -23,34 +23,44 @@ if (!existsSync(uploadsDir)) {
   mkdirSync(uploadsDir, { recursive: true })
 }
 
-const app = express()
+export function createApp() {
+  const app = express()
 
-// Middleware
-app.use(cors({
-  origin: config.allowedOrigins,
-  credentials: true,
-}))
-app.use(cookieParser())
-app.use(express.json())
+  // Middleware
+  app.use(cors({
+    origin: config.allowedOrigins,
+    credentials: true,
+  }))
+  app.use(cookieParser())
+  app.use(express.json())
 
-// Serve uploaded files
-app.use('/api/uploads', express.static(uploadsDir))
+  // Serve uploaded files
+  app.use('/api/uploads', express.static(uploadsDir))
 
-// Routes
-app.use('/api/auth', authRoutes)
-app.use('/api/photos', photoRoutes)
+  // Routes
+  app.use('/api/auth', authRoutes)
+  app.use('/api/photos', photoRoutes)
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' })
-})
+  // Health check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' })
+  })
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err)
-  res.status(500).json({ error: 'Internal server error' })
-})
+  // Error handler
+  app.use((err, req, res, next) => {
+    console.error('Server error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  })
 
-app.listen(config.port, () => {
-  console.log(`Server running on http://localhost:${config.port}`)
-})
+  return app
+}
+
+// Only start server if this file is run directly
+const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
+
+if (isMainModule) {
+  const app = createApp()
+  app.listen(config.port, () => {
+    console.log(`Server running on http://localhost:${config.port}`)
+  })
+}

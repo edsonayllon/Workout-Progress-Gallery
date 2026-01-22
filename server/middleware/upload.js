@@ -14,20 +14,23 @@ if (!existsSync(uploadsDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file) => {
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir)
+  },
+  filename: function (req, file, cb) {
     const ext = extname(file.originalname).toLowerCase() || '.jpg'
-    return `${uuidv4()}${ext}`
+    cb(null, `${uuidv4()}${ext}`)
   },
 })
 
-const fileFilter = (req, file) => {
+const fileFilter = function (req, file, cb) {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
 
   if (allowedTypes.includes(file.mimetype) || file.originalname.match(/\.(heic|heif)$/i)) {
-    return true
+    cb(null, true)
+  } else {
+    cb(new Error('Invalid file type. Only images are allowed.'), false)
   }
-  throw new Error('Invalid file type. Only images are allowed.')
 }
 
 export const upload = multer({
