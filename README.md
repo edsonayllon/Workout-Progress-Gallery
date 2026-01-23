@@ -12,6 +12,12 @@ A React app for tracking workout progress through photos with editable metadata 
 - **Keyboard Navigation** - Use left/right arrow keys to navigate between photos
 - **Local Storage** - All data persists in your browser
 
+## Todo
+
+- [x] Full screen photo view
+- [x] Make PWA so can download as app on phone
+- [ ] Add multiple galleries
+
 ## Tech Stack
 
 - React 18

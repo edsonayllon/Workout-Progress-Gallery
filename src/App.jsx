@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { AuthProvider, useAuthContext } from './context/AuthContext'
 import { usePhotoStorage } from './hooks/usePhotoStorage'
 import { useGalleries } from './hooks/useGalleries'
+import { useImagePreloader } from './hooks/useImagePreloader'
 import { PhotoUpload } from './components/PhotoUpload'
 import { PhotoViewer } from './components/PhotoViewer'
 import { PhotoEditor } from './components/PhotoEditor'
@@ -79,6 +80,9 @@ function Gallery() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const isLoaded = galleriesLoaded && photosLoaded
+
+  // Preload adjacent images for faster navigation
+  useImagePreloader(photos, currentIndex, 2)
 
   // Reset index when gallery changes
   useEffect(() => {
