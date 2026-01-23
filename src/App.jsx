@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { AuthProvider, useAuthContext } from './context/AuthContext'
 import { usePhotoStorage } from './hooks/usePhotoStorage'
+import { useGalleries } from './hooks/useGalleries'
 import { PhotoUpload } from './components/PhotoUpload'
 import { PhotoViewer } from './components/PhotoViewer'
 import { PhotoEditor } from './components/PhotoEditor'
 import { Navigation } from './components/Navigation'
 import { AuthScreen } from './components/AuthScreen'
+import { GallerySelector } from './components/GallerySelector'
 
 function UserMenu() {
   const { user, logout } = useAuthContext()
@@ -62,8 +64,26 @@ function UserMenu() {
 }
 
 function Gallery() {
-  const { photos, isLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage()
+  const {
+    galleries,
+    currentGallery,
+    currentGalleryId,
+    isLoaded: galleriesLoaded,
+    createGallery,
+    renameGallery,
+    deleteGallery,
+    selectGallery,
+  } = useGalleries()
+
+  const { photos, isLoaded: photosLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage(currentGalleryId)
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  const isLoaded = galleriesLoaded && photosLoaded
+
+  // Reset index when gallery changes
+  useEffect(() => {
+    setCurrentIndex(0)
+  }, [currentGalleryId])
 
   useEffect(() => {
     if (photos.length === 0) {
@@ -131,12 +151,24 @@ function Gallery() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-3 py-4 sm:p-5">
-        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-8 pb-4 sm:pb-5 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <UserMenu />
-            <h1 className="text-lg sm:text-2xl font-semibold text-gray-800">Physical Progress</h1>
+        <header className="flex flex-col gap-3 mb-4 sm:mb-8 pb-4 sm:pb-5 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div className="flex items-center gap-3">
+              <UserMenu />
+              <h1 className="text-lg sm:text-2xl font-semibold text-gray-800">Physical Progress</h1>
+            </div>
+            <PhotoUpload onUpload={handleUpload} />
           </div>
-          <PhotoUpload onUpload={handleUpload} />
+          <div className="flex items-center">
+            <GallerySelector
+              galleries={galleries}
+              currentGallery={currentGallery}
+              onSelect={selectGallery}
+              onCreate={createGallery}
+              onRename={renameGallery}
+              onDelete={deleteGallery}
+            />
+          </div>
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4 sm:gap-8">

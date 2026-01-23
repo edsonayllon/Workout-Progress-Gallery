@@ -7,7 +7,6 @@ import {
   doc,
   query,
   where,
-  orderBy,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore'
@@ -21,7 +20,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { v4 as uuidv4 } from 'uuid'
 import { db, storage, auth } from '../firebase'
 
-export function usePhotoStorage() {
+export function usePhotoStorage(galleryId = null) {
   const [photos, setPhotos] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [userId, setUserId] = useState(null)
@@ -34,43 +33,55 @@ export function usePhotoStorage() {
     return () => unsubscribe()
   }, [])
 
-  // Subscribe to photos collection for the current user
+  // Subscribe to photos collection for the current user and gallery
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !galleryId) {
       setPhotos([])
       setIsLoaded(true)
       return
     }
 
+    // Reset photos when gallery changes to avoid showing stale data
+    setPhotos([])
+    setIsLoaded(false)
+
+    // Query without orderBy to avoid needing composite index
     const photosQuery = query(
       collection(db, 'photos'),
       where('userId', '==', userId),
-      orderBy('date', 'asc')
+      where('galleryId', '==', galleryId)
     )
 
     const unsubscribe = onSnapshot(
       photosQuery,
       (snapshot) => {
-        const photosData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const photosData = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
         }))
+        // Sort by date client-side
+        photosData.sort((a, b) => new Date(a.date) - new Date(b.date))
         setPhotos(photosData)
         setIsLoaded(true)
       },
       (error) => {
         console.error('Error fetching photos:', error)
+        setPhotos([])
         setIsLoaded(true)
       }
     )
 
     return () => unsubscribe()
-  }, [userId])
+  }, [userId, galleryId])
 
   const addPhoto = useCallback(async (file, date) => {
     const user = auth.currentUser
     if (!user) {
       throw new Error('Must be logged in to upload photos')
+    }
+
+    if (!galleryId) {
+      throw new Error('No gallery selected')
     }
 
     try {
@@ -89,6 +100,7 @@ export function usePhotoStorage() {
       // Create Firestore document
       const photoData = {
         userId: user.uid,
+        galleryId,
         storagePath,
         imageUrl,
         date: date || new Date().toISOString().split('T')[0],
@@ -106,7 +118,7 @@ export function usePhotoStorage() {
       console.error('Failed to upload photo:', error)
       throw error
     }
-  }, [])
+  }, [galleryId])
 
   const updatePhoto = useCallback(async (id, updates) => {
     try {
