@@ -118,7 +118,7 @@ export function PhotoUpload({ onUpload }) {
   }
 
   return (
-    <div>
+    <div className="w-full sm:w-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -129,7 +129,7 @@ export function PhotoUpload({ onUpload }) {
       <button
         onClick={handleClick}
         disabled={isProcessing}
-        className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base"
       >
         {isProcessing ? status || 'Processing...' : '+ Add Photo'}
       </button>

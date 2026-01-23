@@ -12,7 +12,6 @@ function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef(null)
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -27,7 +26,7 @@ function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-9 h-9 rounded-full overflow-hidden bg-blue-500 hover:ring-2 hover:ring-blue-300 transition-all"
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-blue-500 hover:ring-2 hover:ring-blue-300 transition-all flex-shrink-0"
         title="User settings"
       >
         {user?.photoURL ? (
@@ -42,10 +41,10 @@ function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+        <div className="absolute left-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-800">{user?.displayName || 'User'}</p>
-            <p className="text-xs text-gray-500">{user?.email}</p>
+            <p className="text-sm font-medium text-gray-800 truncate">{user?.displayName || 'User'}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
 
           <div className="pt-1">
@@ -66,7 +65,6 @@ function Gallery() {
   const { photos, isLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage()
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // Adjust current index if photos array changes
   useEffect(() => {
     if (photos.length === 0) {
       setCurrentIndex(0)
@@ -75,10 +73,8 @@ function Gallery() {
     }
   }, [photos.length, currentIndex])
 
-  // Keyboard navigation with arrow keys
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't navigate if user is typing in an input field
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         return
       }
@@ -99,11 +95,8 @@ function Gallery() {
 
   const handleUpload = async (file, date) => {
     const newId = await addPhoto(file, date)
-    // Find the index of the newly added photo after sorting
     const newIndex = photos.findIndex(p => p.id === newId)
     if (newIndex === -1) {
-      // Photo was just added, it will be at the end or sorted position
-      // Set to last position for now, will update after state settles
       setCurrentIndex(photos.length)
     }
   }
@@ -137,18 +130,23 @@ function Gallery() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-5">
-        <header className="flex justify-between items-center mb-8 pb-5 border-b border-gray-200">
+      <div className="max-w-6xl mx-auto px-3 py-4 sm:p-5">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-8 pb-4 sm:pb-5 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <UserMenu />
-            <h1 className="text-2xl font-semibold text-gray-800">Physical Progress</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold text-gray-800">Physical Progress</h1>
           </div>
           <PhotoUpload onUpload={handleUpload} />
         </header>
 
-        <main className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
+        <main className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4 sm:gap-8">
           <div className="flex flex-col">
-            <PhotoViewer photo={currentPhoto} previousPhoto={previousPhoto} />
+            <PhotoViewer
+              photo={currentPhoto}
+              previousPhoto={previousPhoto}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            />
             <Navigation
               currentIndex={currentIndex}
               totalPhotos={photos.length}

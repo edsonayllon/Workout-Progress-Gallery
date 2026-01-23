@@ -20,14 +20,14 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-5">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">
               Workout Progress Gallery
             </h1>
-            <p className="text-gray-500">
+            <p className="text-sm sm:text-base text-gray-500">
               Sign in with Google to continue
             </p>
           </div>
@@ -42,7 +42,7 @@ export function AuthScreen() {
             <button
               onClick={handleSignIn}
               disabled={isSubmitting}
-              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors border border-gray-300 flex items-center justify-center gap-3"
+              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors border border-gray-300 flex items-center justify-center gap-3 text-sm sm:text-base"
             >
               {isSubmitting ? (
                 <>
@@ -69,7 +69,7 @@ export function AuthScreen() {
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -93,7 +93,7 @@ export function AuthScreen() {
             </button>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-400 text-center">
               Your photos are private and only visible to you.
             </p>
