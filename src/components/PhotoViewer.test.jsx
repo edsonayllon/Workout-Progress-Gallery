@@ -281,4 +281,165 @@ describe('PhotoViewer', () => {
       expect(img).toHaveAttribute('alt', 'Progress photo')
     })
   })
+
+  describe('fullscreen mode', () => {
+    it('renders fullscreen button when photo exists', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      expect(fullscreenBtn).toBeInTheDocument()
+    })
+
+    it('does not render fullscreen button when no photo', () => {
+      render(<PhotoViewer photo={null} previousPhoto={null} />)
+
+      expect(screen.queryByRole('button', { name: /enter fullscreen/i })).not.toBeInTheDocument()
+    })
+
+    it('opens fullscreen mode when fullscreen button is clicked', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      const exitBtn = screen.getByRole('button', { name: /exit fullscreen/i })
+      expect(exitBtn).toBeInTheDocument()
+    })
+
+    it('closes fullscreen mode when exit button is clicked', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      // Close fullscreen
+      const exitBtn = screen.getByRole('button', { name: /exit fullscreen/i })
+      fireEvent.click(exitBtn)
+
+      expect(screen.queryByRole('button', { name: /exit fullscreen/i })).not.toBeInTheDocument()
+    })
+
+    it('closes fullscreen mode when Escape key is pressed', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      // Press Escape
+      fireEvent.keyDown(document, { key: 'Escape' })
+
+      expect(screen.queryByRole('button', { name: /exit fullscreen/i })).not.toBeInTheDocument()
+    })
+
+    it('displays photo stats in fullscreen mode', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={mockPreviousPhoto} />)
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      // Stats should still be visible (there will be duplicates - one in normal view, one in fullscreen)
+      expect(screen.getAllByText(/175.5 lbs/i).length).toBeGreaterThan(0)
+      expect(screen.getAllByText(/chest: 42 in/i).length).toBeGreaterThan(0)
+    })
+
+    it('shows navigation buttons in fullscreen when callbacks provided', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          onPrevious={mockOnPrevious}
+        />
+      )
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      expect(screen.getByRole('button', { name: /previous photo/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /next photo/i })).toBeInTheDocument()
+    })
+
+    it('calls onNext when next button clicked in fullscreen', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          onPrevious={mockOnPrevious}
+        />
+      )
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      const nextBtn = screen.getByRole('button', { name: /next photo/i })
+      fireEvent.click(nextBtn)
+
+      expect(mockOnNext).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls onPrevious when previous button clicked in fullscreen', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          onPrevious={mockOnPrevious}
+        />
+      )
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      const prevBtn = screen.getByRole('button', { name: /previous photo/i })
+      fireEvent.click(prevBtn)
+
+      expect(mockOnPrevious).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not show navigation buttons when callbacks not provided', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      expect(screen.queryByRole('button', { name: /previous photo/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /next photo/i })).not.toBeInTheDocument()
+    })
+
+    it('supports swipe navigation in fullscreen mode', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          onPrevious={mockOnPrevious}
+        />
+      )
+
+      // Open fullscreen
+      const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
+      fireEvent.click(fullscreenBtn)
+
+      // Find the fullscreen container (the fixed overlay)
+      const fullscreenOverlay = document.querySelector('.fixed.inset-0')
+
+      // Swipe left
+      fireEvent.touchStart(fullscreenOverlay, {
+        touches: [{ clientX: 200, clientY: 100 }],
+      })
+      fireEvent.touchEnd(fullscreenOverlay, {
+        changedTouches: [{ clientX: 100, clientY: 100 }],
+      })
+
+      expect(mockOnNext).toHaveBeenCalledTimes(1)
+    })
+  })
 })
