@@ -21,6 +21,19 @@ vi.mock('exifr', () => ({
   },
 }))
 
+// Mock image compression
+vi.mock('../utils/imageCompression', () => ({
+  compressImage: vi.fn((file) => Promise.resolve({
+    file: new File([file], file.name, { type: file.type }),
+    originalSize: 5000000,
+    compressedSize: 500000,
+    width: 1920,
+    height: 1080,
+    originalWidth: 3000,
+    originalHeight: 2000,
+  })),
+}))
+
 describe('PhotoUpload', () => {
   let mockOnUpload
 
@@ -62,7 +75,9 @@ describe('PhotoUpload', () => {
     expect(clickSpy).toHaveBeenCalled()
   })
 
-  it('calls onUpload with file and date when a JPEG is selected', async () => {
+  it('compresses and uploads JPEG with date', async () => {
+    const { compressImage } = await import('../utils/imageCompression')
+
     render(<PhotoUpload onUpload={mockOnUpload} />)
 
     const file = new File(['test'], 'photo.jpg', { type: 'image/jpeg' })
@@ -71,12 +86,13 @@ describe('PhotoUpload', () => {
     })
 
     const fileInput = document.querySelector('input[type="file"]')
-
-    await waitFor(async () => {
-      fireEvent.change(fileInput, { target: { files: [file] } })
-    })
+    fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
+      expect(compressImage).toHaveBeenCalledWith(file, {
+        maxDimension: 1920,
+        quality: 0.8,
+      })
       expect(mockOnUpload).toHaveBeenCalledWith(
         expect.any(File),
         expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
@@ -168,6 +184,17 @@ describe('PhotoUpload', () => {
   })
 
   it('handles PNG files correctly', async () => {
+    const { compressImage } = await import('../utils/imageCompression')
+    compressImage.mockResolvedValueOnce({
+      file: new File(['compressed'], 'image.jpg', { type: 'image/jpeg' }),
+      originalSize: 5000000,
+      compressedSize: 500000,
+      width: 1920,
+      height: 1080,
+      originalWidth: 3000,
+      originalHeight: 2000,
+    })
+
     render(<PhotoUpload onUpload={mockOnUpload} />)
 
     const file = new File(['test'], 'image.png', { type: 'image/png' })
@@ -182,18 +209,17 @@ describe('PhotoUpload', () => {
       expect(mockOnUpload).toHaveBeenCalled()
     })
 
+    // File gets compressed to JPEG
     const [uploadedFile] = mockOnUpload.mock.calls[0]
-    expect(uploadedFile.name).toBe('image.png')
+    expect(uploadedFile.name).toBe('image.jpg')
   })
 
-  it('detects HEIC files by extension even without proper MIME type', async () => {
-    // Suppress expected console errors from HEIC conversion in jsdom
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+  it('converts HEIC files before compression', async () => {
+    const { compressImage } = await import('../utils/imageCompression')
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     render(<PhotoUpload onUpload={mockOnUpload} />)
 
-    // HEIC files often have empty or incorrect MIME type
     const file = new File(['test'], 'photo.HEIC', { type: '' })
     Object.defineProperty(file, 'arrayBuffer', {
       value: () => Promise.resolve(new ArrayBuffer(8)),
@@ -206,21 +232,16 @@ describe('PhotoUpload', () => {
       expect(mockOnUpload).toHaveBeenCalled()
     })
 
-    // The file should be recognized as HEIC by extension and onUpload should be called
-    // In jsdom, ImageData is not available so it falls back to original file
-    const [uploadedFile] = mockOnUpload.mock.calls[0]
-    // Either converted to .jpg or fallback to original .HEIC
-    expect(uploadedFile.name).toMatch(/photo\.(jpg|HEIC)/)
+    // compressImage should have been called (after HEIC conversion attempt)
+    expect(compressImage).toHaveBeenCalled()
 
     consoleSpy.mockRestore()
-    consoleLogSpy.mockRestore()
   })
 
-  it('falls back to original HEIC file if conversion fails', async () => {
+  it('falls back to original HEIC file if conversion fails then compresses', async () => {
     const heicDecode = await import('heic-decode')
     heicDecode.default.mockRejectedValueOnce(new Error('Decode failed'))
 
-    // Suppress expected console error
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
@@ -238,44 +259,29 @@ describe('PhotoUpload', () => {
       expect(mockOnUpload).toHaveBeenCalled()
     })
 
-    // Should fall back to original file
-    const [uploadedFile] = mockOnUpload.mock.calls[0]
-    expect(uploadedFile.name).toBe('photo.heic')
-
     consoleSpy.mockRestore()
     consoleLogSpy.mockRestore()
   })
 
-  it('disables button while converting', async () => {
-    // Make the conversion take some time
-    const heicDecode = await import('heic-decode')
-    heicDecode.default.mockImplementationOnce(() =>
+  it('shows processing status while working', async () => {
+    const { compressImage } = await import('../utils/imageCompression')
+
+    // Make compression take some time
+    compressImage.mockImplementationOnce(() =>
       new Promise(resolve => setTimeout(() => resolve({
-        width: 100,
-        height: 100,
-        data: new Uint8Array(100 * 100 * 4),
+        file: new File(['compressed'], 'photo.jpg', { type: 'image/jpeg' }),
+        originalSize: 5000000,
+        compressedSize: 500000,
+        width: 1920,
+        height: 1080,
+        originalWidth: 3000,
+        originalHeight: 2000,
       }), 100))
     )
 
-    // Mock canvas for HEIC conversion using a different approach
-    const originalCreateElement = document.createElement.bind(document)
-    document.createElement = vi.fn((tag) => {
-      if (tag === 'canvas') {
-        return {
-          width: 0,
-          height: 0,
-          getContext: () => ({
-            putImageData: vi.fn(),
-          }),
-          toBlob: (callback) => callback(new Blob(['converted'], { type: 'image/jpeg' })),
-        }
-      }
-      return originalCreateElement(tag)
-    })
-
     render(<PhotoUpload onUpload={mockOnUpload} />)
 
-    const file = new File(['test'], 'photo.heic', { type: 'image/heic' })
+    const file = new File(['test'], 'photo.jpg', { type: 'image/jpeg' })
     Object.defineProperty(file, 'arrayBuffer', {
       value: () => Promise.resolve(new ArrayBuffer(8)),
     })
@@ -283,18 +289,39 @@ describe('PhotoUpload', () => {
     const fileInput = document.querySelector('input[type="file"]')
     fireEvent.change(fileInput, { target: { files: [file] } })
 
-    // Button should show converting state
+    // Button should be disabled during processing
     await waitFor(() => {
-      expect(screen.getByRole('button')).toHaveTextContent('Converting...')
       expect(screen.getByRole('button')).toBeDisabled()
     })
 
-    // Wait for conversion to complete
+    // Wait for processing to complete
     await waitFor(() => {
       expect(screen.getByRole('button')).toHaveTextContent('+ Add Photo')
       expect(screen.getByRole('button')).not.toBeDisabled()
     })
+  })
 
-    document.createElement = originalCreateElement
+  it('shows error when compression fails', async () => {
+    const { compressImage } = await import('../utils/imageCompression')
+    compressImage.mockRejectedValueOnce(new Error('Compression failed'))
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    render(<PhotoUpload onUpload={mockOnUpload} />)
+
+    const file = new File(['test'], 'photo.jpg', { type: 'image/jpeg' })
+    Object.defineProperty(file, 'arrayBuffer', {
+      value: () => Promise.resolve(new ArrayBuffer(8)),
+    })
+
+    const fileInput = document.querySelector('input[type="file"]')
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(globalThis.alert).toHaveBeenCalledWith('Failed to upload photo: Compression failed')
+    })
+
+    expect(mockOnUpload).not.toHaveBeenCalled()
+    consoleSpy.mockRestore()
   })
 })
