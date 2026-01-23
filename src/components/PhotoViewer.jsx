@@ -95,23 +95,25 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious }) {
   )
 
   const StatsOverlay = ({ fullscreen = false }) => (
-    <div className={`absolute bottom-0 left-0 right-0 ${fullscreen ? 'p-4 sm:p-6' : 'p-3 sm:p-5'} bg-gradient-to-t from-black/70 to-transparent text-white`}>
-      <div className={`${fullscreen ? 'text-xl sm:text-2xl' : 'text-base sm:text-xl'} font-semibold mb-1 sm:mb-2`}>
-        {formatDate(photo.date)}
-        {daysDiff != null && (
-          <span className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} font-normal opacity-80 ml-2`}>
-            ({daysDiff} {daysDiff === 1 ? 'day' : 'days'} later)
-          </span>
-        )}
-      </div>
-      {photo.weight != null && (
-        <div className={`${fullscreen ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} mb-0.5 sm:mb-1`}>{photo.weight} lbs</div>
-      )}
-      {validMeasurements.map((measurement, index) => (
-        <div key={index} className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} opacity-90`}>
-          {measurement.label}: {measurement.value} in
+    <div className={`absolute bottom-0 left-0 right-0 flex justify-center ${fullscreen ? 'pb-6' : 'pb-4'} pointer-events-none`}>
+      <div className={`bg-black/50 backdrop-blur-sm rounded-xl ${fullscreen ? 'p-4 sm:p-6' : 'p-3 sm:p-4'} text-white text-center`}>
+        <div className={`${fullscreen ? 'text-xl sm:text-2xl' : 'text-base sm:text-xl'} font-semibold mb-1 sm:mb-2`}>
+          {formatDate(photo.date)}
+          {daysDiff != null && (
+            <span className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} font-normal opacity-80 ml-2`}>
+              ({daysDiff} {daysDiff === 1 ? 'day' : 'days'} later)
+            </span>
+          )}
         </div>
-      ))}
+        {photo.weight != null && (
+          <div className={`${fullscreen ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} mb-0.5 sm:mb-1`}>{photo.weight} lbs</div>
+        )}
+        {validMeasurements.map((measurement, index) => (
+          <div key={index} className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} opacity-90`}>
+            {measurement.label}: {measurement.value} in
+          </div>
+        ))}
+      </div>
     </div>
   )
 
