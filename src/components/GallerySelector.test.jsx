@@ -13,14 +13,12 @@ describe('GallerySelector', () => {
 
   let mockOnSelect
   let mockOnCreate
-  let mockOnRename
-  let mockOnDelete
+  let mockOnSettings
 
   beforeEach(() => {
     mockOnSelect = vi.fn()
     mockOnCreate = vi.fn().mockResolvedValue('new-id')
-    mockOnRename = vi.fn().mockResolvedValue(undefined)
-    mockOnDelete = vi.fn().mockResolvedValue(undefined)
+    mockOnSettings = vi.fn()
   })
 
   const renderSelector = (props = {}) => {
@@ -30,8 +28,7 @@ describe('GallerySelector', () => {
         currentGallery={mockCurrentGallery}
         onSelect={mockOnSelect}
         onCreate={mockOnCreate}
-        onRename={mockOnRename}
-        onDelete={mockOnDelete}
+        onSettings={mockOnSettings}
         {...props}
       />
     )
@@ -157,85 +154,25 @@ describe('GallerySelector', () => {
     })
   })
 
-  describe('renaming galleries', () => {
-    it('shows rename form when edit button is clicked', () => {
+  describe('settings button', () => {
+    it('shows settings button when onSettings is provided', () => {
       renderSelector()
 
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
-
-      const renameButtons = screen.getAllByTitle('Rename')
-      fireEvent.click(renameButtons[0])
-
-      expect(screen.getByDisplayValue('Default')).toBeInTheDocument()
+      expect(screen.getByTitle('Gallery Settings')).toBeInTheDocument()
     })
 
-    it('calls onRename with new name', async () => {
+    it('does not show settings button when onSettings is not provided', () => {
+      renderSelector({ onSettings: undefined })
+
+      expect(screen.queryByTitle('Gallery Settings')).not.toBeInTheDocument()
+    })
+
+    it('calls onSettings when settings button is clicked', () => {
       renderSelector()
 
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
+      fireEvent.click(screen.getByTitle('Gallery Settings'))
 
-      const renameButtons = screen.getAllByTitle('Rename')
-      fireEvent.click(renameButtons[0])
-
-      const input = screen.getByDisplayValue('Default')
-      fireEvent.change(input, { target: { value: 'Main Gallery' } })
-      fireEvent.click(screen.getByRole('button', { name: /save/i }))
-
-      await waitFor(() => {
-        expect(mockOnRename).toHaveBeenCalledWith('1', 'Main Gallery')
-      })
-    })
-  })
-
-  describe('deleting galleries', () => {
-    beforeEach(() => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true)
-    })
-
-    afterEach(() => {
-      vi.restoreAllMocks()
-    })
-
-    it('shows delete button for galleries when more than one exists', () => {
-      renderSelector()
-
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
-
-      const deleteButtons = screen.getAllByTitle('Delete')
-      expect(deleteButtons.length).toBeGreaterThan(0)
-    })
-
-    it('does not show delete button when only one gallery exists', () => {
-      renderSelector({ galleries: [mockGalleries[0]] })
-
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
-
-      expect(screen.queryByTitle('Delete')).not.toBeInTheDocument()
-    })
-
-    it('calls onDelete after confirmation', async () => {
-      renderSelector()
-
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
-
-      const deleteButtons = screen.getAllByTitle('Delete')
-      fireEvent.click(deleteButtons[0])
-
-      await waitFor(() => {
-        expect(mockOnDelete).toHaveBeenCalledWith('1')
-      })
-    })
-
-    it('does not call onDelete when confirmation is cancelled', () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(false)
-      renderSelector()
-
-      fireEvent.click(screen.getByRole('button', { name: /default/i }))
-
-      const deleteButtons = screen.getAllByTitle('Delete')
-      fireEvent.click(deleteButtons[0])
-
-      expect(mockOnDelete).not.toHaveBeenCalled()
+      expect(mockOnSettings).toHaveBeenCalled()
     })
   })
 

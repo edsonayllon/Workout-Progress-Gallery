@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { PhotoEditor } from './PhotoEditor'
 
 describe('PhotoEditor', () => {
@@ -12,6 +11,12 @@ describe('PhotoEditor', () => {
       { label: 'Chest', value: 42 },
       { label: 'Waist', value: 32 },
     ],
+  }
+
+  const mockGalleryConfig = {
+    unitSystem: 'imperial',
+    measurements: ['Chest', 'Waist', 'Arms'],
+    ratios: [],
   }
 
   let mockOnUpdate
@@ -30,20 +35,20 @@ describe('PhotoEditor', () => {
 
   describe('when photo is provided', () => {
     it('renders the editor heading', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       expect(screen.getByText(/edit photo details/i)).toBeInTheDocument()
     })
 
     it('renders date input with correct value', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const dateInput = screen.getByLabelText(/date/i)
       expect(dateInput).toHaveValue('2024-06-15')
     })
 
     it('renders weight input with correct value', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       expect(weightInput).toHaveValue(175.5)
@@ -51,37 +56,37 @@ describe('PhotoEditor', () => {
 
     it('renders weight input empty when weight is null', () => {
       const photoWithoutWeight = { ...mockPhoto, weight: null }
-      render(<PhotoEditor photo={photoWithoutWeight} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={photoWithoutWeight} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       expect(weightInput).toHaveValue(null)
     })
 
     it('renders measurements section', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       expect(screen.getByText(/measurements/i)).toBeInTheDocument()
     })
 
-    it('renders all measurements', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+    it('renders all config measurements as labels', () => {
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
-      expect(screen.getByDisplayValue('Chest')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('42')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('Waist')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('32')).toBeInTheDocument()
+      expect(screen.getByText('Chest')).toBeInTheDocument()
+      expect(screen.getByText('Waist')).toBeInTheDocument()
+      expect(screen.getByText('Arms')).toBeInTheDocument()
     })
 
-    it('renders add measurement button', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+    it('shows existing measurement values', () => {
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
-      expect(screen.getByRole('button', { name: /add measurement/i })).toBeInTheDocument()
+      expect(screen.getByDisplayValue('42')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('32')).toBeInTheDocument()
     })
   })
 
   describe('date editing', () => {
     it('calls onUpdate when date is changed', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const dateInput = screen.getByLabelText(/date/i)
       fireEvent.change(dateInput, { target: { value: '2024-07-01' } })
@@ -92,7 +97,7 @@ describe('PhotoEditor', () => {
 
   describe('weight editing', () => {
     it('calls onUpdate when weight is changed', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       fireEvent.change(weightInput, { target: { value: '180' } })
@@ -101,7 +106,7 @@ describe('PhotoEditor', () => {
     })
 
     it('calls onUpdate with null when weight is cleared', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       fireEvent.change(weightInput, { target: { value: '' } })
@@ -110,7 +115,7 @@ describe('PhotoEditor', () => {
     })
 
     it('handles decimal weight values', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       fireEvent.change(weightInput, { target: { value: '176.7' } })
@@ -119,184 +124,139 @@ describe('PhotoEditor', () => {
     })
   })
 
-  describe('measurement label editing', () => {
-    it('calls onUpdate when measurement label is changed', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
-
-      const labelInput = screen.getByDisplayValue('Chest')
-      fireEvent.change(labelInput, { target: { value: 'Upper Chest' } })
-
-      expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Upper Chest', value: 42 },
-          { label: 'Waist', value: 32 },
-        ],
-      })
-    })
-  })
-
   describe('measurement value editing', () => {
     it('calls onUpdate when measurement value is changed', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const valueInput = screen.getByDisplayValue('42')
       fireEvent.change(valueInput, { target: { value: '44' } })
 
       expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Chest', value: 44 },
-          { label: 'Waist', value: 32 },
-        ],
+        measurements: expect.arrayContaining([
+          expect.objectContaining({ label: 'Chest', value: 44 }),
+        ]),
       })
     })
 
     it('calls onUpdate with null when measurement value is cleared', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const valueInput = screen.getByDisplayValue('42')
       fireEvent.change(valueInput, { target: { value: '' } })
 
       expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Chest', value: null },
-          { label: 'Waist', value: 32 },
-        ],
+        measurements: expect.arrayContaining([
+          expect.objectContaining({ label: 'Chest', value: null }),
+        ]),
       })
     })
 
     it('handles decimal measurement values', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const valueInput = screen.getByDisplayValue('42')
       fireEvent.change(valueInput, { target: { value: '42.5' } })
 
       expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Chest', value: 42.5 },
-          { label: 'Waist', value: 32 },
-        ],
-      })
-    })
-  })
-
-  describe('adding measurements', () => {
-    it('calls onUpdate with new measurement when add button is clicked', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
-
-      const addButton = screen.getByRole('button', { name: /add measurement/i })
-      await userEvent.click(addButton)
-
-      expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Chest', value: 42 },
-          { label: 'Waist', value: 32 },
-          { label: 'New Measurement', value: null },
-        ],
+        measurements: expect.arrayContaining([
+          expect.objectContaining({ label: 'Chest', value: 42.5 }),
+        ]),
       })
     })
 
-    it('works with empty measurements array', async () => {
-      const photoWithNoMeasurements = { ...mockPhoto, measurements: [] }
-      render(<PhotoEditor photo={photoWithNoMeasurements} onUpdate={mockOnUpdate} />)
-
-      const addButton = screen.getByRole('button', { name: /add measurement/i })
-      await userEvent.click(addButton)
-
-      expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [{ label: 'New Measurement', value: null }],
-      })
-    })
-  })
-
-  describe('deleting measurements', () => {
-    it('renders delete buttons for each measurement', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
-
-      const deleteButtons = screen.getAllByRole('button', { name: /remove measurement/i })
-      expect(deleteButtons).toHaveLength(2)
-    })
-
-    it('calls onUpdate without the deleted measurement', async () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
-
-      const deleteButtons = screen.getAllByRole('button', { name: /remove measurement/i })
-      await userEvent.click(deleteButtons[0]) // Delete first measurement (Chest)
-
-      expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [{ label: 'Waist', value: 32 }],
-      })
-    })
-
-    it('can delete the last measurement', async () => {
-      const photoWithOneMeasurement = {
+    it('adds new measurement when value entered for previously empty label', async () => {
+      const photoWithPartialMeasurements = {
         ...mockPhoto,
         measurements: [{ label: 'Chest', value: 42 }],
       }
-      render(<PhotoEditor photo={photoWithOneMeasurement} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={photoWithPartialMeasurements} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
-      const deleteButton = screen.getByRole('button', { name: /remove measurement/i })
-      await userEvent.click(deleteButton)
+      // Arms is in config but has no value - find its input
+      const armsLabel = screen.getByText('Arms')
+      const armsInput = armsLabel.closest('.flex').querySelector('input')
+      fireEvent.change(armsInput, { target: { value: '15' } })
 
       expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [],
+        measurements: expect.arrayContaining([
+          expect.objectContaining({ label: 'Arms', value: 15 }),
+        ]),
       })
+    })
+  })
+
+  describe('unit system', () => {
+    it('displays imperial units by default', () => {
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+
+      expect(screen.getByText(/weight \(lbs\)/i)).toBeInTheDocument()
+    })
+
+    it('displays metric units when config specifies metric', () => {
+      const metricConfig = { ...mockGalleryConfig, unitSystem: 'metric' }
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={metricConfig} />)
+
+      expect(screen.getByText(/weight \(kg\)/i)).toBeInTheDocument()
+      expect(screen.getByText(/measurements \(cm\)/i)).toBeInTheDocument()
+    })
+
+    it('displays imperial units when config specifies imperial', () => {
+      const imperialConfig = { ...mockGalleryConfig, unitSystem: 'imperial' }
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={imperialConfig} />)
+
+      expect(screen.getByText(/weight \(lbs\)/i)).toBeInTheDocument()
+      expect(screen.getByText(/measurements \(in\)/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('no measurements configured', () => {
+    it('shows message when no measurements in config', () => {
+      const emptyMeasurementsConfig = { ...mockGalleryConfig, measurements: [] }
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={emptyMeasurementsConfig} />)
+
+      expect(screen.getByText(/no measurements configured/i)).toBeInTheDocument()
+    })
+
+    it('suggests opening gallery settings', () => {
+      const emptyMeasurementsConfig = { ...mockGalleryConfig, measurements: [] }
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={emptyMeasurementsConfig} />)
+
+      expect(screen.getByText(/open gallery settings/i)).toBeInTheDocument()
     })
   })
 
   describe('edge cases', () => {
     it('handles undefined measurements', () => {
       const photoWithUndefinedMeasurements = { ...mockPhoto, measurements: undefined }
-      render(<PhotoEditor photo={photoWithUndefinedMeasurements} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={photoWithUndefinedMeasurements} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       // Should render without crashing
       expect(screen.getByText(/edit photo details/i)).toBeInTheDocument()
     })
 
-    it('handles measurement with null value', () => {
-      const photoWithNullValue = {
+    it('handles photo with no matching measurements', () => {
+      const photoWithDifferentMeasurements = {
         ...mockPhoto,
-        measurements: [{ label: 'Chest', value: null }],
+        measurements: [{ label: 'Hips', value: 38 }],
       }
-      render(<PhotoEditor photo={photoWithNullValue} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={photoWithDifferentMeasurements} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
-      const valueInputs = screen.getAllByPlaceholderText('Value')
-      expect(valueInputs[0]).toHaveValue(null)
-    })
-
-    it('preserves other measurements when editing one', async () => {
-      const photoWithThreeMeasurements = {
-        ...mockPhoto,
-        measurements: [
-          { label: 'Chest', value: 42 },
-          { label: 'Waist', value: 32 },
-          { label: 'Arms', value: 15 },
-        ],
-      }
-      render(<PhotoEditor photo={photoWithThreeMeasurements} onUpdate={mockOnUpdate} />)
-
-      const waistValueInput = screen.getByDisplayValue('32')
-      fireEvent.change(waistValueInput, { target: { value: '30' } })
-
-      expect(mockOnUpdate).toHaveBeenCalledWith('1', {
-        measurements: [
-          { label: 'Chest', value: 42 },
-          { label: 'Waist', value: 30 },
-          { label: 'Arms', value: 15 },
-        ],
-      })
+      // Config measurements should still be displayed as empty inputs
+      expect(screen.getByText('Chest')).toBeInTheDocument()
+      expect(screen.getByText('Waist')).toBeInTheDocument()
+      expect(screen.getByText('Arms')).toBeInTheDocument()
     })
   })
 
   describe('input attributes', () => {
     it('date input has correct type', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const dateInput = screen.getByLabelText(/date/i)
       expect(dateInput).toHaveAttribute('type', 'date')
     })
 
     it('weight input has correct type and step', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
       const weightInput = screen.getByLabelText(/weight/i)
       expect(weightInput).toHaveAttribute('type', 'number')
@@ -304,21 +264,15 @@ describe('PhotoEditor', () => {
     })
 
     it('measurement value inputs have correct type and step', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
+      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)
 
-      const valueInputs = screen.getAllByPlaceholderText('Value')
+      const valueInputs = screen.getAllByRole('spinbutton').filter(input =>
+        input.id !== 'weight' && input.id !== 'date'
+      )
+
       valueInputs.forEach((input) => {
         expect(input).toHaveAttribute('type', 'number')
         expect(input).toHaveAttribute('step', '0.1')
-      })
-    })
-
-    it('measurement label inputs have correct type', () => {
-      render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} />)
-
-      const labelInputs = screen.getAllByPlaceholderText('Label')
-      labelInputs.forEach((input) => {
-        expect(input).toHaveAttribute('type', 'text')
       })
     })
   })

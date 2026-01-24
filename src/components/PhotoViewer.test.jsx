@@ -22,6 +22,12 @@ describe('PhotoViewer', () => {
     measurements: [],
   }
 
+  const defaultGalleryConfig = {
+    unitSystem: 'imperial',
+    measurements: ['Chest', 'Waist', 'Arms'],
+    ratios: [],
+  }
+
   let mockOnNext
   let mockOnPrevious
 
@@ -74,7 +80,7 @@ describe('PhotoViewer', () => {
     })
 
     it('displays measurements', () => {
-      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} galleryConfig={defaultGalleryConfig} />)
 
       expect(screen.getByText(/chest: 42 in/i)).toBeInTheDocument()
       expect(screen.getByText(/waist: 32 in/i)).toBeInTheDocument()
@@ -88,7 +94,7 @@ describe('PhotoViewer', () => {
           { label: 'Arms', value: null },
         ],
       }
-      render(<PhotoViewer photo={photoWithNullMeasurement} previousPhoto={null} />)
+      render(<PhotoViewer photo={photoWithNullMeasurement} previousPhoto={null} galleryConfig={defaultGalleryConfig} />)
 
       expect(screen.getByText(/chest: 42 in/i)).toBeInTheDocument()
       expect(screen.queryByText(/arms/i)).not.toBeInTheDocument()
@@ -282,6 +288,263 @@ describe('PhotoViewer', () => {
     })
   })
 
+  describe('gallery config', () => {
+    const mockGalleryConfig = {
+      unitSystem: 'metric',
+      measurements: ['Chest', 'Waist'],
+      ratios: [],
+    }
+
+    it('uses metric units when config specifies metric', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          galleryConfig={mockGalleryConfig}
+        />
+      )
+
+      expect(screen.getByText(/175.5 kg/i)).toBeInTheDocument()
+      expect(screen.getByText(/chest: 42 cm/i)).toBeInTheDocument()
+    })
+
+    it('uses imperial units by default', () => {
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={null} galleryConfig={defaultGalleryConfig} />)
+
+      expect(screen.getByText(/175.5 lbs/i)).toBeInTheDocument()
+      expect(screen.getByText(/chest: 42 in/i)).toBeInTheDocument()
+    })
+
+    it('only displays measurements that exist in config', () => {
+      const photoWithExtraMeasurement = {
+        ...mockPhoto,
+        measurements: [
+          { label: 'Chest', value: 42 },
+          { label: 'Waist', value: 32 },
+          { label: 'Arms', value: 15 }, // Not in config
+        ],
+      }
+      const configWithLimitedMeasurements = {
+        unitSystem: 'imperial',
+        measurements: ['Chest'], // Only Chest is in config
+        ratios: [],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithExtraMeasurement}
+          previousPhoto={null}
+          galleryConfig={configWithLimitedMeasurements}
+        />
+      )
+
+      expect(screen.getByText(/chest: 42 in/i)).toBeInTheDocument()
+      expect(screen.queryByText(/waist/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/arms/i)).not.toBeInTheDocument()
+    })
+
+    it('filters out old measurements after config reset', () => {
+      const photoWithOldMeasurement = {
+        ...mockPhoto,
+        measurements: [
+          { label: 'OldMeasurement', value: 50 },
+          { label: 'Chest', value: 42 },
+        ],
+      }
+      const newConfig = {
+        unitSystem: 'imperial',
+        measurements: ['Chest', 'Waist'], // OldMeasurement not included
+        ratios: [],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithOldMeasurement}
+          previousPhoto={null}
+          galleryConfig={newConfig}
+        />
+      )
+
+      expect(screen.getByText(/chest: 42 in/i)).toBeInTheDocument()
+      expect(screen.queryByText(/oldmeasurement/i)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('ratio calculations', () => {
+    const photoWithMeasurements = {
+      ...mockPhoto,
+      measurements: [
+        { label: 'Shoulders', value: 48 },
+        { label: 'Waist', value: 32 },
+        { label: 'Chest', value: 42 },
+      ],
+    }
+
+    it('displays calculated ratios', () => {
+      const configWithRatio = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist', 'Chest'],
+        ratios: [
+          { name: 'Shoulder-to-Waist', numerator: 'Shoulders', denominator: 'Waist' }
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithMeasurements}
+          previousPhoto={null}
+          galleryConfig={configWithRatio}
+        />
+      )
+
+      // 48 / 32 = 1.5
+      expect(screen.getByText(/shoulder-to-waist: 1.5/i)).toBeInTheDocument()
+    })
+
+    it('displays ratio with up to 3 decimal places', () => {
+      const photoWithOddMeasurements = {
+        ...mockPhoto,
+        measurements: [
+          { label: 'Shoulders', value: 47 },
+          { label: 'Waist', value: 32 },
+        ],
+      }
+      const configWithRatio = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist'],
+        ratios: [
+          { name: 'S-to-W', numerator: 'Shoulders', denominator: 'Waist' }
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithOddMeasurements}
+          previousPhoto={null}
+          galleryConfig={configWithRatio}
+        />
+      )
+
+      // 47 / 32 = 1.46875 -> 1.469
+      expect(screen.getByText(/s-to-w: 1.469/i)).toBeInTheDocument()
+    })
+
+    it('removes trailing zeros from ratios', () => {
+      const configWithRatio = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist'],
+        ratios: [
+          { name: 'Ratio', numerator: 'Shoulders', denominator: 'Waist' }
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithMeasurements}
+          previousPhoto={null}
+          galleryConfig={configWithRatio}
+        />
+      )
+
+      // 48 / 32 = 1.5 (not 1.500)
+      expect(screen.getByText('Ratio: 1.5')).toBeInTheDocument()
+    })
+
+    it('does not display ratio when numerator measurement missing', () => {
+      const photoMissingMeasurement = {
+        ...mockPhoto,
+        measurements: [
+          { label: 'Waist', value: 32 },
+        ],
+      }
+      const configWithRatio = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist'],
+        ratios: [
+          { name: 'S-to-W', numerator: 'Shoulders', denominator: 'Waist' }
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoMissingMeasurement}
+          previousPhoto={null}
+          galleryConfig={configWithRatio}
+        />
+      )
+
+      expect(screen.queryByText(/s-to-w/i)).not.toBeInTheDocument()
+    })
+
+    it('does not display ratio when denominator is zero', () => {
+      const photoWithZero = {
+        ...mockPhoto,
+        measurements: [
+          { label: 'Shoulders', value: 48 },
+          { label: 'Waist', value: 0 },
+        ],
+      }
+      const configWithRatio = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist'],
+        ratios: [
+          { name: 'S-to-W', numerator: 'Shoulders', denominator: 'Waist' }
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithZero}
+          previousPhoto={null}
+          galleryConfig={configWithRatio}
+        />
+      )
+
+      expect(screen.queryByText(/s-to-w/i)).not.toBeInTheDocument()
+    })
+
+    it('displays multiple ratios', () => {
+      const configWithMultipleRatios = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist', 'Chest'],
+        ratios: [
+          { name: 'S-to-W', numerator: 'Shoulders', denominator: 'Waist' },
+          { name: 'C-to-W', numerator: 'Chest', denominator: 'Waist' },
+        ],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithMeasurements}
+          previousPhoto={null}
+          galleryConfig={configWithMultipleRatios}
+        />
+      )
+
+      expect(screen.getByText(/s-to-w: 1.5/i)).toBeInTheDocument()
+      expect(screen.getByText(/c-to-w: 1.313/i)).toBeInTheDocument() // 42/32 = 1.3125 -> rounds to 1.313
+    })
+
+    it('handles empty ratios array', () => {
+      const configWithNoRatios = {
+        unitSystem: 'imperial',
+        measurements: ['Shoulders', 'Waist'],
+        ratios: [],
+      }
+
+      render(
+        <PhotoViewer
+          photo={photoWithMeasurements}
+          previousPhoto={null}
+          galleryConfig={configWithNoRatios}
+        />
+      )
+
+      // Should render without errors
+      expect(screen.getByRole('img')).toBeInTheDocument()
+    })
+  })
+
   describe('fullscreen mode', () => {
     it('renders fullscreen button when photo exists', () => {
       render(<PhotoViewer photo={mockPhoto} previousPhoto={null} />)
@@ -334,7 +597,7 @@ describe('PhotoViewer', () => {
     })
 
     it('displays photo stats in fullscreen mode', () => {
-      render(<PhotoViewer photo={mockPhoto} previousPhoto={mockPreviousPhoto} />)
+      render(<PhotoViewer photo={mockPhoto} previousPhoto={mockPreviousPhoto} galleryConfig={defaultGalleryConfig} />)
 
       // Open fullscreen
       const fullscreenBtn = screen.getByRole('button', { name: /enter fullscreen/i })
