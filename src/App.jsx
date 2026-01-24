@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { AuthProvider, useAuthContext } from './context/AuthContext'
 import { usePhotoStorage } from './hooks/usePhotoStorage'
 import { useGalleries } from './hooks/useGalleries'
+import { useGlobalConfig, mergeConfigs } from './hooks/useGlobalConfig'
 import { useImagePreloader } from './hooks/useImagePreloader'
 import { PhotoUpload } from './components/PhotoUpload'
 import { PhotoViewer } from './components/PhotoViewer'
@@ -9,8 +10,10 @@ import { PhotoEditor } from './components/PhotoEditor'
 import { Navigation } from './components/Navigation'
 import { AuthScreen } from './components/AuthScreen'
 import { GallerySelector } from './components/GallerySelector'
+import { GallerySettings } from './components/GallerySettings'
+import { GlobalSettings } from './components/GlobalSettings'
 
-function UserMenu() {
+function UserMenu({ onGlobalSettings }) {
   const { user, logout } = useAuthContext()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef(null)
@@ -50,7 +53,23 @@ function UserMenu() {
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
 
-          <div className="pt-1">
+          <div className="py-1">
+            <button
+              onClick={() => {
+                onGlobalSettings()
+                setIsOpen(false)
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Default Settings
+            </button>
+          </div>
+
+          <div className="border-t border-gray-100 pt-1">
             <button
               onClick={logout}
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -72,14 +91,22 @@ function Gallery() {
     isLoaded: galleriesLoaded,
     createGallery,
     renameGallery,
+    updateGalleryConfig,
+    clearGalleryConfig,
     deleteGallery,
     selectGallery,
   } = useGalleries()
 
+  const { globalConfig, isLoaded: globalConfigLoaded, updateGlobalConfig } = useGlobalConfig()
   const { photos, isLoaded: photosLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage(currentGalleryId)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false)
 
-  const isLoaded = galleriesLoaded && photosLoaded
+  const isLoaded = galleriesLoaded && photosLoaded && globalConfigLoaded
+
+  // Merge global config with gallery-specific overrides
+  const effectiveConfig = mergeConfigs(globalConfig, currentGallery?.config)
 
   // Preload adjacent images for faster navigation
   useImagePreloader(photos, currentIndex, 2)
@@ -146,8 +173,12 @@ function Gallery() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500 text-lg">
-        Loading...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span className="text-gray-500 text-lg">Loading gallery...</span>
       </div>
     )
   }
@@ -158,7 +189,7 @@ function Gallery() {
         <header className="flex flex-col gap-3 mb-4 sm:mb-8 pb-4 sm:pb-5 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div className="flex items-center gap-3">
-              <UserMenu />
+              <UserMenu onGlobalSettings={() => setIsGlobalSettingsOpen(true)} />
               <h1 className="text-lg sm:text-2xl font-semibold text-gray-800">Physical Progress</h1>
             </div>
             <PhotoUpload onUpload={handleUpload} />
@@ -169,8 +200,7 @@ function Gallery() {
               currentGallery={currentGallery}
               onSelect={selectGallery}
               onCreate={createGallery}
-              onRename={renameGallery}
-              onDelete={deleteGallery}
+              onSettings={() => setIsSettingsOpen(true)}
             />
           </div>
         </header>
@@ -182,6 +212,7 @@ function Gallery() {
               previousPhoto={previousPhoto}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              galleryConfig={effectiveConfig}
             />
             <Navigation
               currentIndex={currentIndex}
@@ -193,10 +224,31 @@ function Gallery() {
           </div>
 
           <aside>
-            <PhotoEditor photo={currentPhoto} onUpdate={updatePhoto} />
+            <PhotoEditor photo={currentPhoto} onUpdate={updatePhoto} galleryConfig={effectiveConfig} />
           </aside>
         </main>
       </div>
+
+      {isSettingsOpen && currentGallery && (
+        <GallerySettings
+          gallery={currentGallery}
+          globalConfig={globalConfig}
+          galleryCount={galleries.length}
+          onUpdate={updateGalleryConfig}
+          onClear={clearGalleryConfig}
+          onRename={renameGallery}
+          onDelete={deleteGallery}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      )}
+
+      {isGlobalSettingsOpen && (
+        <GlobalSettings
+          config={globalConfig}
+          onUpdate={updateGlobalConfig}
+          onClose={() => setIsGlobalSettingsOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -206,8 +258,12 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500 text-lg">
-        Loading...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span className="text-gray-500 text-lg">Loading...</span>
       </div>
     )
   }

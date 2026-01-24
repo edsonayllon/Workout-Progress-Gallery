@@ -16,7 +16,7 @@ A React app for tracking workout progress through photos with editable metadata 
 
 - [x] Full screen photo view
 - [x] Make PWA so can download as app on phone
-- [ ] Add multiple galleries
+- [x] Add multiple galleries
 
 ## Tech Stack
 

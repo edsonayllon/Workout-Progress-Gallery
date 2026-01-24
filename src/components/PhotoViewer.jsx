@@ -1,9 +1,28 @@
 import { useRef, useState, useEffect } from 'react'
 
-export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious }) {
+const DEFAULT_CONFIG = {
+  unitSystem: 'imperial',
+  measurements: [],
+  ratios: [],
+}
+
+export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryConfig }) {
+  const config = galleryConfig || DEFAULT_CONFIG
+  const unitSystem = config.unitSystem || 'imperial'
+  const ratios = config.ratios || []
+  const weightUnit = unitSystem === 'metric' ? 'kg' : 'lbs'
+  const measurementUnit = unitSystem === 'metric' ? 'cm' : 'in'
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isImageLoading, setIsImageLoading] = useState(true)
+
+  // Reset loading state when photo changes
+  useEffect(() => {
+    if (photo?.imageUrl) {
+      setIsImageLoading(true)
+    }
+  }, [photo?.imageUrl])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -80,7 +99,31 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious }) {
 
   const daysDiff = getDaysDifference()
 
-  const validMeasurements = photo.measurements?.filter(m => m.value != null) || []
+  const configMeasurements = config.measurements || []
+  // Only show measurements that exist in the current config AND have a value
+  const validMeasurements = photo.measurements?.filter(m =>
+    m.value != null && configMeasurements.includes(m.label)
+  ) || []
+
+  // Calculate ratios from measurements
+  const calculateRatios = () => {
+    if (!ratios.length || !photo.measurements?.length) return []
+
+    return ratios.map(ratio => {
+      const numeratorMeasurement = photo.measurements.find(m => m.label === ratio.numerator)
+      const denominatorMeasurement = photo.measurements.find(m => m.label === ratio.denominator)
+
+      if (numeratorMeasurement?.value != null && denominatorMeasurement?.value != null && denominatorMeasurement.value !== 0) {
+        const value = numeratorMeasurement.value / denominatorMeasurement.value
+        // Format to max 3 decimal places, removing trailing zeros
+        const formatted = parseFloat(value.toFixed(3))
+        return { name: ratio.name, value: formatted }
+      }
+      return null
+    }).filter(Boolean)
+  }
+
+  const calculatedRatios = calculateRatios()
 
   const FullscreenIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -106,11 +149,16 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious }) {
           )}
         </div>
         {photo.weight != null && (
-          <div className={`${fullscreen ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} mb-0.5 sm:mb-1`}>{photo.weight} lbs</div>
+          <div className={`${fullscreen ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} mb-0.5 sm:mb-1`}>{photo.weight} {weightUnit}</div>
         )}
         {validMeasurements.map((measurement, index) => (
           <div key={index} className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} opacity-90`}>
-            {measurement.label}: {measurement.value} in
+            {measurement.label}: {measurement.value} {measurementUnit}
+          </div>
+        ))}
+        {calculatedRatios.map((ratio, index) => (
+          <div key={`ratio-${index}`} className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} opacity-90`}>
+            {ratio.name}: {ratio.value}
           </div>
         ))}
       </div>
@@ -121,15 +169,24 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious }) {
     <>
       <div className="bg-white rounded-t-xl overflow-hidden border border-b-0 border-gray-200">
         <div
-          className="relative flex justify-center items-center bg-gray-100 touch-pan-y"
+          className="relative flex justify-center items-center bg-gray-100 touch-pan-y min-h-[250px] sm:min-h-[400px]"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
+          {isImageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          )}
           <img
             src={photo.imageUrl}
             alt="Progress photo"
-            className="max-w-full max-h-[50vh] sm:max-h-[70vh] object-contain select-none pointer-events-none"
+            className={`max-w-full max-h-[50vh] sm:max-h-[70vh] object-contain select-none pointer-events-none transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
             draggable={false}
+            onLoad={() => setIsImageLoading(false)}
           />
           <button
             onClick={() => setIsFullscreen(true)}

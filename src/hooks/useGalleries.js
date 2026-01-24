@@ -101,6 +101,7 @@ export function useGalleries() {
       const galleryData = {
         userId: uid,
         name: DEFAULT_GALLERY_NAME,
+        // No config - inherits from global config
         createdAt: serverTimestamp(),
       }
 
@@ -163,6 +164,7 @@ export function useGalleries() {
       const galleryData = {
         userId: user.uid,
         name: name.trim(),
+        // No config - inherits from global config
         createdAt: serverTimestamp(),
       }
 
@@ -180,6 +182,26 @@ export function useGalleries() {
       await updateDoc(galleryRef, { name: newName.trim() })
     } catch (error) {
       console.error('Failed to rename gallery:', error)
+      throw error
+    }
+  }, [])
+
+  const updateGalleryConfig = useCallback(async (id, config) => {
+    try {
+      const galleryRef = doc(db, 'galleries', id)
+      await updateDoc(galleryRef, { config })
+    } catch (error) {
+      console.error('Failed to update gallery config:', error)
+      throw error
+    }
+  }, [])
+
+  const clearGalleryConfig = useCallback(async (id) => {
+    try {
+      const galleryRef = doc(db, 'galleries', id)
+      await updateDoc(galleryRef, { config: null })
+    } catch (error) {
+      console.error('Failed to clear gallery config:', error)
       throw error
     }
   }, [])
@@ -235,6 +257,8 @@ export function useGalleries() {
     isLoaded,
     createGallery,
     renameGallery,
+    updateGalleryConfig,
+    clearGalleryConfig,
     deleteGallery,
     selectGallery,
   }
