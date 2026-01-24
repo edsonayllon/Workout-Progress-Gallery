@@ -17,6 +17,9 @@ A React app for tracking workout progress through photos with editable metadata 
 - [x] Full screen photo view
 - [x] Make PWA so can download as app on phone
 - [x] Add multiple galleries
+- [x] Add global and local config
+- [ ] Let users set reverse chronological if they want, instead of n days later, show n days before
+- [x] Add missing tests
 
 ## Tech Stack
 
