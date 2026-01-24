@@ -7,6 +7,7 @@ describe('GallerySettings', () => {
     unitSystem: 'imperial',
     measurements: ['Waist', 'Chest', 'Arms'],
     ratios: [],
+    sortOrder: 'chronological',
   }
 
   const mockGallery = {
@@ -22,6 +23,7 @@ describe('GallerySettings', () => {
       unitSystem: 'metric',
       measurements: ['Waist', 'Hips'],
       ratios: [{ name: 'Waist-to-Hips', numerator: 'Waist', denominator: 'Hips' }],
+      sortOrder: 'reverseChronological',
     },
   }
 
@@ -362,6 +364,86 @@ describe('GallerySettings', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
       expect(mockOnClose).toHaveBeenCalled()
+    })
+  })
+
+  describe('sort order', () => {
+    it('displays photo order section', () => {
+      render(
+        <GallerySettings
+          gallery={mockGallery}
+          globalConfig={mockGlobalConfig}
+          galleryCount={2}
+          onUpdate={mockOnUpdate}
+          onClear={mockOnClear}
+          onRename={mockOnRename}
+          onDelete={mockOnDelete}
+          onClose={mockOnClose}
+        />
+      )
+
+      expect(screen.getByText('Photo Order')).toBeInTheDocument()
+    })
+
+    it('uses global sort order when no override', () => {
+      render(
+        <GallerySettings
+          gallery={mockGallery}
+          globalConfig={mockGlobalConfig}
+          galleryCount={2}
+          onUpdate={mockOnUpdate}
+          onClear={mockOnClear}
+          onRename={mockOnRename}
+          onDelete={mockOnDelete}
+          onClose={mockOnClose}
+        />
+      )
+
+      const oldestFirstBtn = screen.getByRole('button', { name: /oldest first/i })
+      expect(oldestFirstBtn).toHaveClass('bg-blue-500')
+    })
+
+    it('uses gallery override sort order when present', () => {
+      render(
+        <GallerySettings
+          gallery={mockGalleryWithOverride}
+          globalConfig={mockGlobalConfig}
+          galleryCount={2}
+          onUpdate={mockOnUpdate}
+          onClear={mockOnClear}
+          onRename={mockOnRename}
+          onDelete={mockOnDelete}
+          onClose={mockOnClose}
+        />
+      )
+
+      const newestFirstBtn = screen.getByRole('button', { name: /newest first/i })
+      expect(newestFirstBtn).toHaveClass('bg-blue-500')
+    })
+
+    it('saves sortOrder in config', async () => {
+      render(
+        <GallerySettings
+          gallery={mockGallery}
+          globalConfig={mockGlobalConfig}
+          galleryCount={2}
+          onUpdate={mockOnUpdate}
+          onClear={mockOnClear}
+          onRename={mockOnRename}
+          onDelete={mockOnDelete}
+          onClose={mockOnClose}
+        />
+      )
+
+      // Switch to newest first
+      fireEvent.click(screen.getByRole('button', { name: /newest first/i }))
+      fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalledWith('gallery-1', expect.objectContaining({
+          sortOrder: 'reverseChronological',
+        }))
+      })
     })
   })
 })

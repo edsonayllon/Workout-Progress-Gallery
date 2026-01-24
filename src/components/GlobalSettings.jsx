@@ -5,6 +5,7 @@ export function GlobalSettings({ config, onUpdate, onClose }) {
   const [unitSystem, setUnitSystem] = useState(config?.unitSystem || 'imperial')
   const [measurements, setMeasurements] = useState(config?.measurements || [])
   const [ratios, setRatios] = useState(config?.ratios || [])
+  const [sortOrder, setSortOrder] = useState(config?.sortOrder || 'chronological')
   const [newMeasurement, setNewMeasurement] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
@@ -13,6 +14,7 @@ export function GlobalSettings({ config, onUpdate, onClose }) {
       setUnitSystem(config.unitSystem || 'imperial')
       setMeasurements(config.measurements || [])
       setRatios(config.ratios || [])
+      setSortOrder(config.sortOrder || 'chronological')
     }
   }, [config])
 
@@ -41,7 +43,7 @@ export function GlobalSettings({ config, onUpdate, onClose }) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await onUpdate({ unitSystem, measurements, ratios })
+      await onUpdate({ unitSystem, measurements, ratios, sortOrder })
       onClose()
     } catch (error) {
       alert('Failed to save settings')
@@ -100,6 +102,39 @@ export function GlobalSettings({ config, onUpdate, onClose }) {
             </div>
             <p className="mt-2 text-xs text-gray-500">
               Weight in {weightUnit}, measurements in {measurementUnit}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Photo Order
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortOrder('chronological')}
+                className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                  sortOrder === 'chronological'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Oldest First
+              </button>
+              <button
+                onClick={() => setSortOrder('reverseChronological')}
+                className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                  sortOrder === 'reverseChronological'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Newest First
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              {sortOrder === 'chronological'
+                ? 'Shows "X days later" between photos'
+                : 'Shows "X days before" between photos'}
             </p>
           </div>
 

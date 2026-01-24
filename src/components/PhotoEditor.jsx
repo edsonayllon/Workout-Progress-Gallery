@@ -3,7 +3,7 @@ const DEFAULT_CONFIG = {
   measurements: ['Waist', 'Chest', 'Arms'],
 }
 
-export function PhotoEditor({ photo, onUpdate, galleryConfig }) {
+export function PhotoEditor({ photo, onUpdate, onDelete, galleryConfig }) {
   if (!photo) return null
 
   const config = galleryConfig || DEFAULT_CONFIG
@@ -107,6 +107,21 @@ export function PhotoEditor({ photo, onUpdate, galleryConfig }) {
           <p className="text-sm text-gray-400 text-center">
             No measurements configured. Open gallery settings to add measurement types.
           </p>
+        </div>
+      )}
+
+      {onDelete && (
+        <div className="mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-200">
+          <button
+            onClick={onDelete}
+            className="w-full py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+            aria-label="Delete photo"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Delete Photo</span>
+          </button>
         </div>
       )}
     </div>

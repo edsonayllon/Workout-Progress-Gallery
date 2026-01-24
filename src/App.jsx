@@ -98,7 +98,7 @@ function Gallery() {
   } = useGalleries()
 
   const { globalConfig, isLoaded: globalConfigLoaded, updateGlobalConfig } = useGlobalConfig()
-  const { photos, isLoaded: photosLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage(currentGalleryId)
+  const { photos: unsortedPhotos, isLoaded: photosLoaded, addPhoto, updatePhoto, deletePhoto } = usePhotoStorage(currentGalleryId)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false)
@@ -107,6 +107,15 @@ function Gallery() {
 
   // Merge global config with gallery-specific overrides
   const effectiveConfig = mergeConfigs(globalConfig, currentGallery?.config)
+
+  // Sort photos based on config
+  const photos = [...unsortedPhotos].sort((a, b) => {
+    const dateA = new Date(a.date)
+    const dateB = new Date(b.date)
+    return effectiveConfig.sortOrder === 'reverseChronological'
+      ? dateB - dateA
+      : dateA - dateB
+  })
 
   // Preload adjacent images for faster navigation
   useImagePreloader(photos, currentIndex, 2)
@@ -212,19 +221,18 @@ function Gallery() {
               previousPhoto={previousPhoto}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              hasPrevious={currentIndex > 0}
+              hasNext={currentIndex < photos.length - 1}
               galleryConfig={effectiveConfig}
             />
             <Navigation
               currentIndex={currentIndex}
               totalPhotos={photos.length}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-              onDelete={handleDelete}
             />
           </div>
 
           <aside>
-            <PhotoEditor photo={currentPhoto} onUpdate={updatePhoto} galleryConfig={effectiveConfig} />
+            <PhotoEditor photo={currentPhoto} onUpdate={updatePhoto} onDelete={handleDelete} galleryConfig={effectiveConfig} />
           </aside>
         </main>
       </div>

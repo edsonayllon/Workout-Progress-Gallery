@@ -4,12 +4,15 @@ const DEFAULT_CONFIG = {
   unitSystem: 'imperial',
   measurements: [],
   ratios: [],
+  sortOrder: 'chronological',
 }
 
-export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryConfig }) {
+export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryConfig, hasPrevious, hasNext }) {
   const config = galleryConfig || DEFAULT_CONFIG
   const unitSystem = config.unitSystem || 'imperial'
   const ratios = config.ratios || []
+  const sortOrder = config.sortOrder || 'chronological'
+  const isReverseChronological = sortOrder === 'reverseChronological'
   const weightUnit = unitSystem === 'metric' ? 'kg' : 'lbs'
   const measurementUnit = unitSystem === 'metric' ? 'cm' : 'in'
   const touchStartX = useRef(null)
@@ -92,12 +95,13 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryC
     if (!previousPhoto) return null
     const currentDate = new Date(photo.date)
     const prevDate = new Date(previousPhoto.date)
-    const diffTime = currentDate - prevDate
+    const diffTime = Math.abs(currentDate - prevDate)
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
     return diffDays
   }
 
   const daysDiff = getDaysDifference()
+  const daysDiffLabel = isReverseChronological ? 'before' : 'later'
 
   const configMeasurements = config.measurements || []
   // Only show measurements that exist in the current config AND have a value
@@ -144,7 +148,7 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryC
           {formatDate(photo.date)}
           {daysDiff != null && (
             <span className={`${fullscreen ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} font-normal opacity-80 ml-2`}>
-              ({daysDiff} {daysDiff === 1 ? 'day' : 'days'} later)
+              ({daysDiff} {daysDiff === 1 ? 'day' : 'days'} {daysDiffLabel})
             </span>
           )}
         </div>
@@ -195,6 +199,31 @@ export function PhotoViewer({ photo, previousPhoto, onNext, onPrevious, galleryC
           >
             <FullscreenIcon />
           </button>
+
+          {hasPrevious && onPrevious && (
+            <button
+              onClick={onPrevious}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+              aria-label="Previous photo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+
+          {hasNext && onNext && (
+            <button
+              onClick={onNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+              aria-label="Next photo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          )}
+
           <StatsOverlay />
         </div>
       </div>

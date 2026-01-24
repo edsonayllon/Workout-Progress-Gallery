@@ -26,6 +26,7 @@ describe('PhotoViewer', () => {
     unitSystem: 'imperial',
     measurements: ['Chest', 'Waist', 'Arms'],
     ratios: [],
+    sortOrder: 'chronological',
   }
 
   let mockOnNext
@@ -134,6 +135,33 @@ describe('PhotoViewer', () => {
 
       expect(screen.queryByText(/days later/i)).not.toBeInTheDocument()
       expect(screen.queryByText(/day later/i)).not.toBeInTheDocument()
+    })
+
+    it('shows "days before" in reverse chronological mode', () => {
+      const reverseConfig = { ...defaultGalleryConfig, sortOrder: 'reverseChronological' }
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={mockPreviousPhoto}
+          galleryConfig={reverseConfig}
+        />
+      )
+
+      expect(screen.getByText(/14 days before/i)).toBeInTheDocument()
+    })
+
+    it('shows singular "day before" for 1 day difference in reverse mode', () => {
+      const oneDayBefore = { ...mockPhoto, date: '2024-06-02' }
+      const reverseConfig = { ...defaultGalleryConfig, sortOrder: 'reverseChronological' }
+      render(
+        <PhotoViewer
+          photo={oneDayBefore}
+          previousPhoto={mockPreviousPhoto}
+          galleryConfig={reverseConfig}
+        />
+      )
+
+      expect(screen.getByText(/1 day before/i)).toBeInTheDocument()
     })
   })
 
@@ -542,6 +570,105 @@ describe('PhotoViewer', () => {
 
       // Should render without errors
       expect(screen.getByRole('img')).toBeInTheDocument()
+    })
+  })
+
+  describe('navigation arrows on photo', () => {
+    it('shows previous button when hasPrevious is true', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onPrevious={mockOnPrevious}
+          hasPrevious={true}
+          hasNext={false}
+        />
+      )
+
+      const prevButtons = screen.getAllByRole('button', { name: /previous photo/i })
+      expect(prevButtons.length).toBeGreaterThan(0)
+    })
+
+    it('hides previous button when hasPrevious is false', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onPrevious={mockOnPrevious}
+          hasPrevious={false}
+          hasNext={true}
+        />
+      )
+
+      // Should only have fullscreen button visible initially, not previous
+      const buttons = screen.getAllByRole('button')
+      const prevButton = buttons.find(btn => btn.getAttribute('aria-label') === 'Previous photo')
+      expect(prevButton).toBeUndefined()
+    })
+
+    it('shows next button when hasNext is true', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          hasPrevious={false}
+          hasNext={true}
+        />
+      )
+
+      const nextButtons = screen.getAllByRole('button', { name: /next photo/i })
+      expect(nextButtons.length).toBeGreaterThan(0)
+    })
+
+    it('hides next button when hasNext is false', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          hasPrevious={true}
+          hasNext={false}
+        />
+      )
+
+      const buttons = screen.getAllByRole('button')
+      const nextButton = buttons.find(btn => btn.getAttribute('aria-label') === 'Next photo')
+      expect(nextButton).toBeUndefined()
+    })
+
+    it('calls onPrevious when previous button clicked', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onPrevious={mockOnPrevious}
+          hasPrevious={true}
+          hasNext={false}
+        />
+      )
+
+      const prevButton = screen.getAllByRole('button', { name: /previous photo/i })[0]
+      fireEvent.click(prevButton)
+
+      expect(mockOnPrevious).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls onNext when next button clicked', () => {
+      render(
+        <PhotoViewer
+          photo={mockPhoto}
+          previousPhoto={null}
+          onNext={mockOnNext}
+          hasPrevious={false}
+          hasNext={true}
+        />
+      )
+
+      const nextButton = screen.getAllByRole('button', { name: /next photo/i })[0]
+      fireEvent.click(nextButton)
+
+      expect(mockOnNext).toHaveBeenCalledTimes(1)
     })
   })
 

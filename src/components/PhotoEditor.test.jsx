@@ -247,6 +247,50 @@ describe('PhotoEditor', () => {
     })
   })
 
+  describe('delete button', () => {
+    it('shows delete button when onDelete is provided', () => {
+      const mockOnDelete = vi.fn()
+      render(
+        <PhotoEditor
+          photo={mockPhoto}
+          onUpdate={mockOnUpdate}
+          onDelete={mockOnDelete}
+          galleryConfig={mockGalleryConfig}
+        />
+      )
+
+      expect(screen.getByRole('button', { name: /delete photo/i })).toBeInTheDocument()
+    })
+
+    it('hides delete button when onDelete is not provided', () => {
+      render(
+        <PhotoEditor
+          photo={mockPhoto}
+          onUpdate={mockOnUpdate}
+          galleryConfig={mockGalleryConfig}
+        />
+      )
+
+      expect(screen.queryByRole('button', { name: /delete photo/i })).not.toBeInTheDocument()
+    })
+
+    it('calls onDelete when delete button is clicked', () => {
+      const mockOnDelete = vi.fn()
+      render(
+        <PhotoEditor
+          photo={mockPhoto}
+          onUpdate={mockOnUpdate}
+          onDelete={mockOnDelete}
+          galleryConfig={mockGalleryConfig}
+        />
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: /delete photo/i }))
+
+      expect(mockOnDelete).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('input attributes', () => {
     it('date input has correct type', () => {
       render(<PhotoEditor photo={mockPhoto} onUpdate={mockOnUpdate} galleryConfig={mockGalleryConfig} />)

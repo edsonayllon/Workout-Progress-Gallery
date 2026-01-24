@@ -7,6 +7,7 @@ describe('GlobalSettings', () => {
     unitSystem: 'imperial',
     measurements: ['Waist', 'Chest'],
     ratios: [],
+    sortOrder: 'chronological',
   }
 
   let mockOnUpdate
@@ -115,6 +116,7 @@ describe('GlobalSettings', () => {
         unitSystem: 'imperial',
         measurements: ['Waist', 'Chest'],
         ratios: [],
+        sortOrder: 'chronological',
       })
     })
 
@@ -160,5 +162,59 @@ describe('GlobalSettings', () => {
     render(<GlobalSettings config={configWithMeasurements} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
 
     expect(screen.getByText('Measurement Ratios')).toBeInTheDocument()
+  })
+
+  describe('sort order', () => {
+    it('displays photo order section', () => {
+      render(<GlobalSettings config={mockConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      expect(screen.getByText('Photo Order')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /oldest first/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /newest first/i })).toBeInTheDocument()
+    })
+
+    it('shows chronological as selected by default', () => {
+      render(<GlobalSettings config={mockConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      const oldestFirstBtn = screen.getByRole('button', { name: /oldest first/i })
+      expect(oldestFirstBtn).toHaveClass('bg-blue-500')
+    })
+
+    it('allows switching to reverse chronological', () => {
+      render(<GlobalSettings config={mockConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      const newestFirstBtn = screen.getByRole('button', { name: /newest first/i })
+      fireEvent.click(newestFirstBtn)
+
+      expect(newestFirstBtn).toHaveClass('bg-blue-500')
+    })
+
+    it('saves sortOrder when saving', async () => {
+      render(<GlobalSettings config={mockConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      // Switch to newest first
+      fireEvent.click(screen.getByRole('button', { name: /newest first/i }))
+
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalledWith(expect.objectContaining({
+          sortOrder: 'reverseChronological',
+        }))
+      })
+    })
+
+    it('shows helper text for chronological', () => {
+      render(<GlobalSettings config={mockConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      expect(screen.getByText(/shows "x days later"/i)).toBeInTheDocument()
+    })
+
+    it('shows helper text for reverse chronological', () => {
+      const reverseConfig = { ...mockConfig, sortOrder: 'reverseChronological' }
+      render(<GlobalSettings config={reverseConfig} onUpdate={mockOnUpdate} onClose={mockOnClose} />)
+
+      expect(screen.getByText(/shows "x days before"/i)).toBeInTheDocument()
+    })
   })
 })

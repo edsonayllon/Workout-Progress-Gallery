@@ -12,6 +12,7 @@ export const DEFAULT_CONFIG = {
   unitSystem: 'imperial', // 'imperial' or 'metric'
   measurements: ['Waist', 'Chest', 'Arms'], // Default measurement labels
   ratios: [], // Array of { name, numerator, denominator }
+  sortOrder: 'chronological', // 'chronological' or 'reverseChronological'
 }
 
 export function useGlobalConfig() {
@@ -46,6 +47,7 @@ export function useGlobalConfig() {
             unitSystem: data.unitSystem || DEFAULT_CONFIG.unitSystem,
             measurements: data.measurements || DEFAULT_CONFIG.measurements,
             ratios: data.ratios || DEFAULT_CONFIG.ratios,
+            sortOrder: data.sortOrder || DEFAULT_CONFIG.sortOrder,
           })
         } else {
           // No config exists yet, use defaults
@@ -75,6 +77,7 @@ export function useGlobalConfig() {
         unitSystem: config.unitSystem,
         measurements: config.measurements,
         ratios: config.ratios || [],
+        sortOrder: config.sortOrder || 'chronological',
         updatedAt: new Date(),
       }, { merge: true })
     } catch (error) {
@@ -102,6 +105,7 @@ export function mergeConfigs(globalConfig, galleryConfig) {
     unitSystem: galleryConfig.unitSystem ?? globalConfig.unitSystem,
     measurements: galleryConfig.measurements ?? globalConfig.measurements,
     ratios: galleryConfig.ratios ?? globalConfig.ratios ?? [],
+    sortOrder: galleryConfig.sortOrder ?? globalConfig.sortOrder ?? 'chronological',
     isInherited: false,
   }
 }

@@ -9,6 +9,7 @@ export function GallerySettings({ gallery, globalConfig, galleryCount, onUpdate,
   const [unitSystem, setUnitSystem] = useState(effectiveConfig?.unitSystem || 'imperial')
   const [measurements, setMeasurements] = useState(effectiveConfig?.measurements || [])
   const [ratios, setRatios] = useState(effectiveConfig?.ratios || [])
+  const [sortOrder, setSortOrder] = useState(effectiveConfig?.sortOrder || 'chronological')
   const [newMeasurement, setNewMeasurement] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
@@ -27,6 +28,7 @@ export function GallerySettings({ gallery, globalConfig, galleryCount, onUpdate,
       setUnitSystem(config.unitSystem || 'imperial')
       setMeasurements(config.measurements || [])
       setRatios(config.ratios || [])
+      setSortOrder(config.sortOrder || 'chronological')
     }
   }, [gallery, globalConfig, hasOverride])
 
@@ -60,7 +62,7 @@ export function GallerySettings({ gallery, globalConfig, galleryCount, onUpdate,
         await onRename(gallery.id, galleryName.trim())
       }
       // Update config
-      await onUpdate(gallery.id, { unitSystem, measurements, ratios })
+      await onUpdate(gallery.id, { unitSystem, measurements, ratios, sortOrder })
       onClose()
     } catch (error) {
       alert('Failed to save settings')
@@ -170,6 +172,39 @@ export function GallerySettings({ gallery, globalConfig, galleryCount, onUpdate,
             </div>
             <p className="mt-2 text-xs text-gray-500">
               Weight in {weightUnit}, measurements in {measurementUnit}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Photo Order
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortOrder('chronological')}
+                className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                  sortOrder === 'chronological'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Oldest First
+              </button>
+              <button
+                onClick={() => setSortOrder('reverseChronological')}
+                className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                  sortOrder === 'reverseChronological'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Newest First
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              {sortOrder === 'chronological'
+                ? 'Shows "X days later" between photos'
+                : 'Shows "X days before" between photos'}
             </p>
           </div>
 

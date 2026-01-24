@@ -50,6 +50,7 @@ describe('useGlobalConfig', () => {
         unitSystem: 'imperial',
         measurements: ['Waist', 'Chest', 'Arms'],
         ratios: [],
+        sortOrder: 'chronological',
       })
     })
   })
@@ -100,6 +101,7 @@ describe('useGlobalConfig', () => {
             unitSystem: 'metric',
             measurements: ['Waist', 'Hips'],
             ratios: [{ name: 'W-to-H', numerator: 'Waist', denominator: 'Hips' }],
+            sortOrder: 'reverseChronological',
           }),
         })
       })
@@ -108,6 +110,7 @@ describe('useGlobalConfig', () => {
         unitSystem: 'metric',
         measurements: ['Waist', 'Hips'],
         ratios: [{ name: 'W-to-H', numerator: 'Waist', denominator: 'Hips' }],
+        sortOrder: 'reverseChronological',
       })
       expect(result.current.isLoaded).toBe(true)
     })
@@ -184,6 +187,7 @@ describe('mergeConfigs', () => {
     unitSystem: 'imperial',
     measurements: ['Waist', 'Chest'],
     ratios: [{ name: 'Test', numerator: 'Waist', denominator: 'Chest' }],
+    sortOrder: 'chronological',
   }
 
   it('returns global config with isInherited when no gallery config', () => {
@@ -209,6 +213,7 @@ describe('mergeConfigs', () => {
       unitSystem: 'metric',
       measurements: ['Hips'],
       ratios: [],
+      sortOrder: 'reverseChronological',
     }
 
     const result = mergeConfigs(globalConfig, galleryConfig)
@@ -217,6 +222,7 @@ describe('mergeConfigs', () => {
       unitSystem: 'metric',
       measurements: ['Hips'],
       ratios: [],
+      sortOrder: 'reverseChronological',
       isInherited: false,
     })
   })
@@ -224,7 +230,7 @@ describe('mergeConfigs', () => {
   it('falls back to global for missing gallery config fields', () => {
     const galleryConfig = {
       unitSystem: 'metric',
-      // measurements and ratios not specified
+      // measurements, ratios, and sortOrder not specified
     }
 
     const result = mergeConfigs(globalConfig, galleryConfig)
@@ -232,6 +238,7 @@ describe('mergeConfigs', () => {
     expect(result.unitSystem).toBe('metric')
     expect(result.measurements).toEqual(['Waist', 'Chest'])
     expect(result.ratios).toEqual([{ name: 'Test', numerator: 'Waist', denominator: 'Chest' }])
+    expect(result.sortOrder).toBe('chronological')
     expect(result.isInherited).toBe(false)
   })
 
