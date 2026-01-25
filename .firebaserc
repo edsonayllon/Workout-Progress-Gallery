@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "workout-progress-app-297f6"
+  },
+  "targets": {
+    "workout-progress-app-297f6": {
+      "hosting": {
+        "app": ["workout-progress-app-297f6"],
+        "landing": ["gainsmirrorlanding"]
+      }
+    }
   }
 }

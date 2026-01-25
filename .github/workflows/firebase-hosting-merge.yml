@@ -1,0 +1,44 @@
+# Deploy to Firebase Hosting on merge to release branch
+
+name: Deploy to Firebase Hosting on merge
+on:
+  push:
+    branches:
+      - release
+jobs:
+  build_and_deploy_app:
+    name: Build and Deploy App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        run: npm run build
+      - name: Deploy app to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WORKOUT_PROGRESS_APP_297F6 }}
+          channelId: live
+          projectId: workout-progress-app-297f6
+          target: app
+
+  deploy_landing:
+    name: Deploy Landing Page
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy landing page to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WORKOUT_PROGRESS_APP_297F6 }}
+          channelId: live
+          projectId: workout-progress-app-297f6
+          target: landing
