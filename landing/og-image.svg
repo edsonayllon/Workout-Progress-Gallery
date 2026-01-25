@@ -10,25 +10,24 @@
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
 
-  <!-- Logo -->
-  <g transform="translate(100, 240)">
-    <rect x="0" y="0" width="50" height="50" rx="8" fill="white" fill-opacity="0.9"/>
-    <rect x="60" y="0" width="50" height="50" rx="8" fill="white" fill-opacity="0.7"/>
-    <rect x="0" y="60" width="50" height="50" rx="8" fill="white" fill-opacity="0.7"/>
-    <rect x="60" y="60" width="50" height="50" rx="8" fill="white" fill-opacity="0.5"/>
+  <!-- Mirror Logo -->
+  <g transform="translate(100, 215)">
+    <rect width="130" height="130" rx="25" fill="#14532d"/>
+    <ellipse cx="65" cy="58" rx="37" ry="47" fill="white" fill-opacity="0.9"/>
+    <ellipse cx="65" cy="58" rx="32" ry="42" fill="#bbf7d0"/>
+    <ellipse cx="49" cy="42" rx="9" ry="14" fill="white" opacity="0.35"/>
+    <rect x="59" y="100" width="12" height="10" fill="white" fill-opacity="0.9"/>
+    <rect x="52" y="108" width="26" height="6" rx="3" fill="white" fill-opacity="0.9"/>
   </g>
 
   <!-- Title -->
-  <text x="220" y="290" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="56" font-weight="800" fill="white">
-    Workout Progress
-  </text>
-  <text x="220" y="360" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="56" font-weight="800" fill="white">
-    Gallery
+  <text x="220" y="320" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="72" font-weight="800" fill="white">
+    Gains Mirror
   </text>
 
   <!-- Subtitle -->
-  <text x="220" y="420" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" fill="white" fill-opacity="0.9">
-    Track your fitness transformation with progress photos
+  <text x="260" y="400" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" fill="white" fill-opacity="0.9">
+    See your gains reflected back at you
   </text>
 
   <!-- Decorative elements -->

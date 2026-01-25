@@ -1,6 +1,6 @@
-# Workout Progress Gallery - Landing Page
+# Gains Mirror - Landing Page
 
-SEO-optimized landing page for Workout Progress Gallery.
+SEO-optimized landing page for Gains Mirror.
 
 ## Structure
 
@@ -44,8 +44,8 @@ landing/
    ```
 
 2. Update URLs in the HTML files to match your domain:
-   - Replace `workoutprogressgallery.app` with your domain
-   - Replace `app.workoutprogressgallery.app` with your app subdomain
+   - Replace `gainsmirror.com` with your domain
+   - Replace `app.gainsmirror.com` with your app subdomain
 
 ### Deploy
 
@@ -108,7 +108,7 @@ Before going live, ensure you:
 
 ### Updating App Links
 
-All links to the main app point to `https://app.workoutprogressgallery.app`. Update these in:
+All links to the main app point to `https://app.gainsmirror.com`. Update these in:
 - `index.html` - Navigation and CTA buttons
 - `download.html` - Navigation and web app section
 - `privacy.html` - Navigation

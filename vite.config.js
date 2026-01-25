@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Workout Progress Gallery',
-        short_name: 'Workout Gallery',
-        description: 'Track your workout progress with photos',
+        name: 'Gains Mirror',
+        short_name: 'Gains Mirror',
+        description: 'Track your fitness gains with progress photos',
         theme_color: '#22c55e',
         background_color: '#14532d',
         display: 'standalone',

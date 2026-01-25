@@ -1,5 +1,5 @@
 {
-  "name": "workout-progress-gallery",
+  "name": "gains-mirror",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -18,9 +18,9 @@
     "cap:android": "npx cap open android"
   },
   "build": {
-    "appId": "com.workout.progressgallery",
-    "productName": "Workout Progress Gallery",
-    "executableName": "WorkoutProgressGallery",
+    "appId": "com.gainsmirror.app",
+    "productName": "Gains Mirror",
+    "executableName": "GainsMirror",
     "directories": {
       "output": "electron-dist"
     },

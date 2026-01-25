@@ -1,7 +1,7 @@
-# Robots.txt for Workout Progress Gallery Landing Page
+# Robots.txt for Gains Mirror Landing Page
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://workoutprogressgallery.app/sitemap.xml
+Sitemap: https://gainsmirror.com/sitemap.xml

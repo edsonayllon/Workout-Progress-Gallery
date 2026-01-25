@@ -1,6 +1,6 @@
 {
-  "appId": "com.workout.progressgallery",
-  "appName": "Workout Progress Gallery",
+  "appId": "com.gainsmirror.app",
+  "appName": "Gains Mirror",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {

@@ -1,4 +1,4 @@
-# Workout Progress Gallery
+# Gains Mirror
 
 A React app for tracking workout progress through photos with editable metadata overlays.
 
