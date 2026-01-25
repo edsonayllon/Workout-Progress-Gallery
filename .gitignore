@@ -49,3 +49,10 @@ coverage
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# Capacitor native projects
+ios/
+android/
+
+# Electron build output
+electron-dist/

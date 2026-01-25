@@ -1,0 +1,17 @@
+{
+  "appId": "com.workout.progressgallery",
+  "appName": "Workout Progress Gallery",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "Camera": {
+      "presentationStyle": "popover"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "android": {
+    "useLegacyBridge": false
+  }
+}
