@@ -1,0 +1,7 @@
+# Robots.txt for Workout Progress Gallery Landing Page
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://workoutprogressgallery.app/sitemap.xml
